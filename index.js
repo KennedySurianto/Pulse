@@ -6,11 +6,12 @@ import pg from "pg";
 dotenv.config();
 
 // const db = new pg.Client({
-//     user: process.env.DB_USER,
-//     host: process.env.DB_HOST,
-//     password: process.env.DB_PASS,
-//     port: process.env.DB_PORT
-// })
+//     user: process.env.PG_USER,
+//     host: process.env.PG_HOST,
+//     database: process.env.PG_DATABASE,
+//     password: process.env.PG_PASSWORD,
+//     port: process.env.PG_PORT,
+// });
 // db.connect();
 
 const app = express();
