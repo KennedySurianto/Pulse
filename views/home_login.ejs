@@ -1,24 +1,25 @@
-<%- include("partials/header_home.ejs") %>
+<%- include("partials/home_header.ejs") %>
 
-    <div class="container mt-5">
+    <div class="container" style="margin-top: 96px;">
         <div class="row d-flex justify-content-center align-items-center">
             <div class="col-12 col-md-8 col-lg-6 col-xl-5 mb-5">
                 <div class="border border-white rounded-0 text-white" style="border-radius: 1rem;">
                     <div class="p-5 text-center">
 
-                        <div class="mb-md-5 mt-md-4">
+                        <form action="/login-post" method="post" class="mb-md-5 mt-md-4">
+                            <%- include("partials/message.ejs") %>
 
                             <h2 class="fw-bold mb-2 text-uppercase">Login</h2>
-                            <p class="text-white-50 mb-5">Please enter your login and password!</p>
+                            <p class="text-white-50 mb-5">Please enter your username and password!</p>
 
                             <div class="form-floating mb-3 text-dark">
-                                <input type="email" name="email" class="form-control" id="floatingInput"
+                                <input type="text" name="username" class="form-control rounded-0" id="floatingInput"
                                     placeholder="name@example.com">
-                                <label for="email">Email address</label>
+                                <label for="username">Username</label>
                             </div>
 
                             <div class="form-floating text-dark">
-                                <input type="password" name="password" class="form-control" id="floatingPassword"
+                                <input type="password" name="password" class="form-control rounded-0" id="floatingPassword"
                                     placeholder="Password">
                                 <label for="password">Password</label>
                             </div>
@@ -28,7 +29,7 @@
                             <button data-mdb-button-init data-mdb-ripple-init class="btn btn-outline-light btn-lg px-5"
                                 type="submit">Login</button>
 
-                        </div>
+                        </form>
 
                         <div>
                             <p class="mb-0">Don't have an account? <a href="/register" class="text-white-50 fw-bold">Sign

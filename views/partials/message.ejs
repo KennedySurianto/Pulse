@@ -1,0 +1,9 @@
+<% if (locals.message && message.content.length> 0) { %>
+    <div class="alert alert-<%= message.type %> alert-dismissible fade show rounded-0" role="alert">
+        <strong>
+            <%= message.content %>!
+        </strong>
+        <%= message.subcontent %>.
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+<% } %>
