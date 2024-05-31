@@ -1,0 +1,12 @@
+<%- include("partials/auth_header.ejs") %>
+<%- include("partials/auth_subheader.ejs") %>
+
+<div class="container pt-4">
+    <h2 class="text-light"><%= user.username %>'s Profile</h2>
+    <form action="/logout" method="post">
+        <button type="submit">logout</button>
+    </form>
+</div>
+
+
+<%- include("partials/footer.ejs") %>

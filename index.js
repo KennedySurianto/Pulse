@@ -73,12 +73,120 @@ app.get("/register", (req, res) => {
 })
 
 // AUTH
-app.get("/home", (req, res) => {
-    res.render("auth_home.ejs");
+app.get("/home", ensureAuthenticated, async (req, res) => {
+    try {
+        const friends = await db.query("SELECT * FROM friends f JOIN users u ON f.friend_id = u.user_id WHERE f.user_id = $1", [req.user.user_id]);
+
+        res.render("auth_home.ejs", { message: globalMessage.getMessage(), friends: friends.rows, friendActive: true });
+    } catch (error) {
+        console.log(error);
+        res.redirect("/");
+    }
+})
+
+app.get("/pending", ensureAuthenticated, async (req, res) => {
+    try {
+        const pending = await db.query("SELECT f.user_id, u.username FROM friends f JOIN users u ON u.user_id = f.user_id WHERE friend_id = $1 EXCEPT SELECT f.friend_id, u.username FROM friends f JOIN users u ON u.user_id = f.friend_id WHERE f.user_id = $1", [req.user.user_id]);
+
+        res.render("auth_pending.ejs", { message: globalMessage.getMessage(), pending: pending.rows, pendingActive: true });
+    } catch (error) {
+        console.log(error);
+        res.redirect("/");
+    }
+})
+
+app.get("/users", ensureAuthenticated, async (req, res) => {
+    try {
+        const users = await db.query("SELECT u.user_id, username FROM users u WHERE u.user_id <> $1 AND u.user_id NOT IN (SELECT friend_id FROM friends WHERE user_id = $1)", [req.user.user_id]);
+        res.render("auth_userlist.ejs", { users: users.rows, userActive: true });
+    } catch (error) {
+        console.log(error);
+        res.redirect("/");
+    }
+})
+
+app.get("/profile", ensureAuthenticated, async (req, res) => {
+    try {
+        res.render("auth_profile.ejs", { user: req.user, profileActive: true });
+    } catch (error) {
+        console.log(error);
+        res.redirect("/");
+    }
+})
+
+app.get("/chat/:friend_id", ensureAuthenticated, async (req, res) => {
+    const friend_id = req.params.friend_id;
+    try {
+        const messages = await db.query("SELECT DISTINCT c.*, m.*, u.username FROM chats c JOIN participants p ON p.chat_id = c.chat_id JOIN messages m ON m.chat_id = c.chat_id JOIN users u ON m.sender_id = u.user_id WHERE p.user_id IN ($1, $2) ORDER BY m.created_at ASC", [req.user.user_id, friend_id]);
+        console.log(messages.rows);
+
+        const friend = await db.query("SELECT user_id, username FROM users WHERE user_id = $1", [friend_id]);
+
+        res.render("auth_chat.ejs", { messages: messages.rows, friend: friend.rows[0] });
+    } catch (error) {
+        console.log(error);
+        res.redirect("/");
+    }
+})
+
+app.post("/remove-friend", ensureAuthenticated, async (req, res) => {
+    const friend_id = parseInt(req.body.friend_id);
+    
+    try {
+        await db.query("DELETE FROM friends WHERE user_id = $1 AND friend_id = $2", [req.user.user_id, friend_id]);
+
+        res.redirect("/home");
+    } catch (error) {
+        console.log(error);
+        res.redirect("/");
+    }
+})
+
+app.post("/add-friend", ensureAuthenticated, async (req, res) => {
+    const friend_id = parseInt(req.body.user_id);
+    // console.log(friend_id);
+    try {
+        await db.query("BEGIN;");
+        await db.query("INSERT INTO friends (user_id, friend_id) VALUES ($1, $2)", [
+            req.user.user_id,
+            friend_id
+        ]);
+        const chat = await db.query("INSERT INTO chats (chat_id) VALUES (DEFAULT) RETURNING *");
+        await db.query("INSERT INTO participants (user_id, chat_id) VALUES ($1, $3), ($2, $3)", [
+            req.user.user_id,
+            friend_id,
+            chat.rows[0].chat_id
+        ]);
+        await db.query("COMMIT");
+
+        globalMessage.setMessage("success", "Friend added successfully", "Try chatting now");
+
+        res.redirect("/home");
+    } catch (error) {
+        await db.query("ROLLBACK");
+
+        console.log(error);
+        res.redirect("/");
+    }
+})
+
+app.post("/message-post", async (req, res) => {
+    const sender_id = parseInt(req.user.user_id);
+    const content = req.body.content;
+    const chat_id = parseInt(req.body.chat_id);
+    const friend_id = parseInt(req.body.friend_id);
+
+    try {
+        await db.query("INSERT INTO messages (sender_id, content, chat_id) VALUES ($1, $2, $3)", [sender_id, content, chat_id]);
+
+        res.redirect(`/chat/${friend_id}`);
+    } catch (error) {
+        console.log(error);
+        res.redirect("/");
+    }
 })
 
 // REGISTER, LOGIN, LOGOUT POST ROUTE
-
 app.post("/logout", ensureAuthenticated, (req, res) => {
     req.logout((err) => {
         if (err) {
@@ -151,7 +259,6 @@ passport.use(
                         return done(err);
                     } else if (isMatch) {
                         console.log(user);
-                        globalMessage.setMessage("success", "Account logged in successfully", "Welcome back")
                         return done(null, user);
                     } else {
                         globalMessage.setMessage("danger", "Incorrect password", "Please make sure you entered the correct password");
