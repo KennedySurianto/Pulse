@@ -9,7 +9,7 @@
             <!-- Chat Messages -->
             <div class="col-12 p-3 overflow-y-auto" id="chat-messages">
                 <!-- Add more messages here... -->
-                <% if (locals.messages) { %>
+                <% if (locals.messages && messages.length > 0) { %>
                     <% messages.forEach((m) => { %>
                         <div class="media mb-1">
                             <div class="media-body text-light">
@@ -37,7 +37,7 @@
             <div class="col-12 mb-5">
                 <form action="/message-post" method="post">
                     <div class="input-group">
-                        <input type="hidden" name="chat_id" value="<%= messages[0].chat_id %>">
+                        <input type="hidden" name="chat_id" value="<%= chat_id %>">
                         <input type="hidden" name="friend_id" value="<%= friend.user_id %>">
 
                         <input type="text" name="content" class="form-control" placeholder="Message <%= friend.username %>" autocomplete="off" required>

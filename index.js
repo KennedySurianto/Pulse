@@ -127,7 +127,7 @@ app.get("/home", ensureAuthenticated, async (req, res) => {
 
 app.get("/pending", ensureAuthenticated, async (req, res) => {
     try {
-        const pending = await req.db.query("SELECT f.user_id, u.username FROM friends f JOIN users u ON u.user_id = f.user_id WHERE friend_id = $1 EXCEPT SELECT f.friend_id, u.username FROM friends f JOIN users u ON u.user_id = f.friend_id WHERE f.user_id = $1", [req.user.user_id]);
+        const pending = await req.db.query("SELECT f.user_id, u.username, u.profile_image_url FROM friends f JOIN users u ON u.user_id = f.user_id WHERE friend_id = $1 EXCEPT SELECT f.friend_id, u.username, u.profile_image_url FROM friends f JOIN users u ON u.user_id = f.friend_id WHERE f.user_id = $1", [req.user.user_id]);
 
         res.render("auth_pending.ejs", { message: globalMessage.getMessage(), pending: pending.rows, pendingActive: true });
     } catch (error) {
@@ -138,7 +138,7 @@ app.get("/pending", ensureAuthenticated, async (req, res) => {
 
 app.get("/users", ensureAuthenticated, async (req, res) => {
     try {
-        const users = await req.db.query("SELECT u.user_id, username FROM users u WHERE u.user_id <> $1 AND u.user_id NOT IN (SELECT friend_id FROM friends WHERE user_id = $1)", [req.user.user_id]);
+        const users = await req.db.query("SELECT u.user_id, username, profile_image_url FROM users u WHERE u.user_id <> $1 AND u.user_id NOT IN (SELECT friend_id FROM friends WHERE user_id = $1)", [req.user.user_id]);
         res.render("auth_userlist.ejs", { users: users.rows, userActive: true });
     } catch (error) {
         console.log(error);
@@ -158,17 +158,34 @@ app.get("/profile", ensureAuthenticated, async (req, res) => {
 app.get("/chat/:friend_id", ensureAuthenticated, async (req, res) => {
     const friend_id = req.params.friend_id;
     try {
-        const messages = await req.db.query("SELECT DISTINCT c.*, m.*, u.username FROM chats c JOIN participants p ON p.chat_id = c.chat_id JOIN messages m ON m.chat_id = c.chat_id JOIN users u ON m.sender_id = u.user_id WHERE p.user_id IN ($1, $2) ORDER BY m.created_at ASC", [req.user.user_id, friend_id]);
-        console.log(messages.rows);
+        let chatQuery = await req.db.query("SELECT DISTINCT p1.chat_id FROM participants p1 JOIN participants p2 ON p1.chat_id = p2.chat_id WHERE p1.user_id = $1 AND p2.user_id = $2", [req.user.user_id, friend_id]);
 
-        const friend = await req.db.query("SELECT user_id, username FROM users WHERE user_id = $1", [friend_id]);
+        const friendQuery = await req.db.query("SELECT user_id, username, profile_image_url FROM users WHERE user_id = $1", [friend_id]);
+        const friend = friendQuery.rows[0];
 
-        res.render("auth_chat.ejs", { messages: messages.rows, friend: friend.rows[0] });
+        let messages;
+        let finalChatId;
+        if (chatQuery.rowCount > 0) {
+            const chat_id = chatQuery.rows[0].chat_id;
+            messages = await req.db.query("SELECT DISTINCT * FROM messages m JOIN users u ON u.user_id = m.sender_id WHERE m.chat_id = $1", [chat_id]);
+            finalChatId = chat_id;
+        } else {
+            await req.db.query("BEGIN;");
+            const newChatQuery = await req.db.query("INSERT INTO chats DEFAULT VALUES RETURNING chat_id");
+            const newChatId = newChatQuery.rows[0].chat_id;
+            await req.db.query("INSERT INTO participants (chat_id, user_id) VALUES ($1, $2), ($1, $3)", [newChatId, req.user.user_id, friend_id]);
+            await req.db.query("COMMIT;");
+            messages = { rows: [] }; // Initialize messages to an empty array since there are no messages in a new chat
+            finalChatId = newChatId;
+        }
+
+        res.render("auth_chat.ejs", { chat_id: finalChatId, messages: messages.rows, friend });
     } catch (error) {
-        console.log(error);
+        await req.db.query("ROLLBACK;");
+        console.error(error);
         res.redirect("/");
     }
-})
+});
 
 app.post('/upload-profile-picture', upload.single('picture'), async (req, res) => {
     // Access uploaded file details via req.file
@@ -179,7 +196,7 @@ app.post('/upload-profile-picture', upload.single('picture'), async (req, res) =
     const fileUrl = `${req.protocol}://${req.get('host')}/images/${req.file.filename}`;
     try {
         // Delete the previous profile image, if it exists
-        if (req.user.profile_image_url) {
+        if (req.user.profile_image_url && !req.user.profile_image_url.includes("https")) {
             const previousImagePath = req.user.profile_image_url.split('/').pop(); // Get the filename from the URL
             await fs.unlink(`public/images/${previousImagePath}`);
         }
@@ -209,25 +226,13 @@ app.post("/add-friend", ensureAuthenticated, async (req, res) => {
     const friend_id = parseInt(req.body.user_id);
     // console.log(friend_id);
     try {
-        await req.db.query("BEGIN;");
         await req.db.query("INSERT INTO friends (user_id, friend_id) VALUES ($1, $2)", [
             req.user.user_id,
             friend_id
         ]);
-        const chat = await req.db.query("INSERT INTO chats (chat_id) VALUES (DEFAULT) RETURNING *");
-        await req.db.query("INSERT INTO participants (user_id, chat_id) VALUES ($1, $3), ($2, $3)", [
-            req.user.user_id,
-            friend_id,
-            chat.rows[0].chat_id
-        ]);
-        await req.db.query("COMMIT");
-
         globalMessage.setMessage("success", "Friend added successfully", "Try chatting now");
-
         res.redirect("/home");
     } catch (error) {
-        await req.db.query("ROLLBACK");
-
         console.log(error);
         res.redirect("/");
     }
