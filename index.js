@@ -12,7 +12,6 @@ const saltRounds = 10;
 const { Pool } = pg;
 
 dotenv.config();
-
 const pool = new Pool({
     user: process.env.PG_USER,
     host: process.env.PG_HOST,
@@ -203,16 +202,13 @@ app.post("/message-post", async (req, res) => {
 })
 
 // REGISTER, LOGIN, LOGOUT POST ROUTE
-app.post("/logout", ensureAuthenticated, (req, res) => {
-    req.logout((err) => {
-        if (err) {
-            console.error(err);
-            return res.sendStatus(500); // Internal Server Error
-        }
+app.post('/logout', async (req, res, next) => {
+    req.logout();
+    req.session = null;
+    res.clearCookie('app.session', process.env.SESSION_SECRET)
+    res.clearCookie('app.session.sig', process.env.SESSION_SECRET)
 
-        res.clearCookie('connect.sid'); // Clear the session cookie
-        res.redirect("/");
-    })
+    return res.redirect("/");
 })
 
 app.post("/register-post", async (req, res) => {
