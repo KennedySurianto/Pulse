@@ -1,44 +1,49 @@
 <%- include("partials/auth_header.ejs") %>
 <%- include("partials/auth_subheader.ejs") %>
 
-<div class="container pt-4">
-    <h2 class="text-light">Friend List</h2>
-
-    <ul class="list-group rounded-0">
-        <% if (locals.friends && friends.length > 0) { %>
-            <% friends.forEach((f) => { %>
-                <li class="list-group-item d-flex justify-content-between align-items-center">
-                    <div class="media">
-                        <div class="d-flex align-items-center fw-semibold fs-3">
-                            <img src="https://via.placeholder.com/30" class="me-2 rounded-circle" alt="Friend Avatar">
-                            <%= f.username %>
+    <div class="container py-4">
+        <div class="border border-light p-5 mb-5">
+            <h2 class="text-light">Friend List</h2>
+            <hr style="color: white;">
+            <ul class="list-group rounded-0">
+                <% if (locals.friends && friends.length> 0) { %>
+                    <% friends.forEach((f)=> { %>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <div class="media">
+                                <div class="d-flex align-items-center fw-semibold fs-3">
+                                    <img src="<%= f.profile_image_url %>" class="me-2 rounded-circle"
+                                        alt="Friend Avatar" style="width: 40px;" >
+                                    <%= f.username %>
+                                </div>
+                            </div>
+                            <div class="d-flex">
+                                <a href="/chat/<%= f.friend_id %>"
+                                    class="btn btn-primary rounded-pill me-2">Chat</a>
+                                <form action="/remove-friend" method="post">
+                                    <input type="hidden" name="friend_id" value="<%= f.friend_id %>">
+                                    <button type="submit" class="btn btn-danger rounded-pill">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                            fill="currentColor" class="bi bi-x" viewBox="0 0 16 16">
+                                            <path
+                                                d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708" />
+                                        </svg>
+                                    </button>
+                                </form>
+                            </div>
+                        </li>
+                    <% }) %>
+                <% } else { %>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <div class="media">
+                            <div class="media-body">
+                                <h5 class="pt-2">You don't have any friends yet.</h5>
+                                <a href="/users">Start adding now!</a>
+                            </div>
                         </div>
-                    </div>
-                    <div class="d-flex">
-                        <a href="/chat/<%= f.friend_id %>" class="btn btn-primary rounded-pill me-2">Chat</a>
-                        <form action="/remove-friend" method="post">
-                            <input type="hidden" name="friend_id" value="<%= f.friend_id %>">
-                            <button type="submit" class="btn btn-danger rounded-pill">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-x" viewBox="0 0 16 16">
-                                    <path
-                                        d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708" />
-                                </svg>
-                            </button>
-                        </form>
-                    </div>
-                </li>
-            <% }) %>
-        <% } else { %>
-        <li class="list-group-item d-flex justify-content-between align-items-center">
-            <div class="media">
-                <div class="media-body">
-                    <h5 class="pt-2">You don't have any friends yet.</h5>
-                    <a href="/users">Start adding now!</a>
-                </div>
-            </div>
-        </li>
-        <% } %>
-    </ul>
-</div>
+                    </li>
+                <% } %>
+            </ul>
+        </div>
+    </div>
 
 <%- include("partials/footer.ejs") %>

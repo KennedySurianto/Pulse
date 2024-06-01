@@ -2,47 +2,49 @@
 <%- include("partials/auth_subheader.ejs") %>
 
 <!-- Chat Container -->
-<div class="container pt-4">
+<div class="container py-4">
     <div class="row h-100">
+        <div class="border border-light p-5 pb-2 mb-5">
 
-        <!-- Chat Messages -->
-        <div class="col-12 p-3 overflow-y-auto" id="chat-messages">
-            <!-- Add more messages here... -->
-            <% if (locals.messages) { %>
-                <% messages.forEach((m) => { %>
-                    <div class="media mb-1">
-                        <div class="media-body text-light">
-                            <div class="d-flex py-1">
-                                <div class=" d-flex flex-column justify-content-start">
-                                    <img src="https://via.placeholder.com/30" class="me-2 rounded-circle" alt="Friend Avatar">
-                                </div>
-                                <div>
-                                    <div class="d-flex align-items-center">
-                                        <h4 class="me-2"><%= m.username %></h4>
-                                        <small>
-                                            <%= new Date(m.created_at).toLocaleTimeString([], {hour: '2-digit' , minute: '2-digit' }) %>
-                                        </small>
+            <!-- Chat Messages -->
+            <div class="col-12 p-3 overflow-y-auto" id="chat-messages">
+                <!-- Add more messages here... -->
+                <% if (locals.messages) { %>
+                    <% messages.forEach((m) => { %>
+                        <div class="media mb-1">
+                            <div class="media-body text-light">
+                                <div class="d-flex py-1">
+                                    <div class=" d-flex flex-column justify-content-start">
+                                        <img src="https://via.placeholder.com/30" class="me-2 rounded-circle" alt="Friend Avatar">
                                     </div>
-                                    <p><%= m.content %></p>
+                                    <div>
+                                        <div class="d-flex align-items-center">
+                                            <h4 class="me-2"><%= m.username %></h4>
+                                            <small>
+                                                <%= new Date(m.created_at).toLocaleTimeString([], {hour: '2-digit' , minute: '2-digit' }) %>
+                                            </small>
+                                        </div>
+                                        <p><%= m.content %></p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
+                    <% }) %>
+                <% } %>
+            </div>
+
+            <!-- Chat Input -->
+            <div class="col-12 mb-5">
+                <form action="/message-post" method="post">
+                    <div class="input-group">
+                        <input type="hidden" name="chat_id" value="<%= messages[0].chat_id %>">
+                        <input type="hidden" name="friend_id" value="<%= friend.user_id %>">
+
+                        <input type="text" name="content" class="form-control" placeholder="Message <%= friend.username %>" autocomplete="off" required>
+                        <button class="btn btn-primary rounded-0" type="submit">Send</button>
                     </div>
-                <% }) %>
-            <% } %>
-        </div>
-
-        <!-- Chat Input -->
-        <div class="col-12 mb-5">
-            <form action="/message-post" method="post">
-                <div class="input-group">
-                    <input type="hidden" name="chat_id" value="<%= messages[0].chat_id %>">
-                    <input type="hidden" name="friend_id" value="<%= friend.user_id %>">
-
-                    <input type="text" name="content" class="form-control" placeholder="Message <%= friend.username %>">
-                    <button class="btn btn-primary rounded-0" type="submit">Send</button>
-                </div>
-            </form>
+                </form>
+            </div>
         </div>
     </div>
 </div>

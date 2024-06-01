@@ -1,12 +1,123 @@
 <%- include("partials/auth_header.ejs") %>
 <%- include("partials/auth_subheader.ejs") %>
 
-<div class="container pt-4">
-    <h2 class="text-light"><%= user.username %>'s Profile</h2>
-    <form action="/logout" method="post">
-        <button type="submit">logout</button>
-    </form>
-</div>
+    <style>
+        .disabled-input {
+        background-color: #e9ecef; /* Use a light gray background color */
+        opacity: 0.65; /* Reduce opacity to indicate disabled state */
+        }
+        .profile-image-container {
+        position: relative;
+        width: 150px;
+        height: 150px;
+        margin-bottom: 20px;
+        }
+        .profile-image-container img {
+        cursor: pointer;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: opacity 0.3s;
+        }
+        .profile-image-container:hover img {
+        opacity: 0.5;
+        }
+        .profile-image-container:hover .overlay {
+        display: flex;
+        }
+        .overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        color: white;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2em;
+        border-radius: 50%;
+        cursor: pointer;
+        }
+        input[type="file"] {
+        display: none;
+        }
+    </style>
 
+    <div class="container py-4">
+        <div class="border border-light p-5 mb-5">
+            <h2 class="text-light">
+                <%= user.username %>'s Profile
+            </h2>
+            <hr style="color: white">
+            <!-- Profile Image -->
+            <div class="mb-3">
+                <form action="/upload-profile-picture" method="post" enctype="multipart/form-data">
+                    <div class="profile-image-container">
+                        <img id="profileImage" src="<%= user.profile_image_url %>" alt="Profile Image" class="img-fluid rounded-circle">
+                        <div class="overlay">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-pencil me-1"
+                                viewBox="0 0 16 16">
+                                <path
+                                    d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293zm-9.761 5.175-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325" />
+                            </svg>
+                            Change
+                        </div>
+                        <input type="file" id="profileImageInput" name="picture" accept="image/*">
+                    </div>
+                    <button type="submit" id="submitButton" class="btn btn-primary" style="display: none;">Upload</button>
+                </form>
+            </div>
+
+            <!-- Username -->
+            <div class="mb-3">
+                <label for="username" class="form-label text-light">Username</label>
+                <input type="text" id="username" class="form-control disabled-input" value="<%= user.username %>" readonly>
+            </div>
+            <hr style="color: white">
+            <!-- Change Password Form -->
+            <form action="/change-password" method="post" class="mb-3">
+                <h4 class="text-light">Change Password</h4>
+                <div class="mb-3">
+                    <label for="currentPassword" class="form-label text-light">Current Password</label>
+                    <input type="password" id="currentPassword" name="currentPassword" class="form-control" required>
+                </div>
+                <div class="mb-3">
+                    <label for="newPassword" class="form-label text-light">New Password</label>
+                    <input type="password" id="newPassword" name="newPassword" class="form-control" required>
+                </div>
+                <div class="mb-3">
+                    <label for="confirmPassword" class="form-label text-light">Confirm New Password</label>
+                    <input type="password" id="confirmPassword" name="confirmPassword" class="form-control" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Change Password</button>
+            </form>
+            <hr style="color: white">
+            <!-- Logout Form -->
+            <form action="/logout" method="post">
+                <button type="submit" class="btn btn-danger">Logout</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const profileImage = document.getElementById('profileImage'); // Get the image element
+        const profileImageInput = document.getElementById('profileImageInput');
+        const submitButton = document.getElementById('submitButton');
+        const overlay = document.querySelector('.overlay'); // Get the overlay element
+
+        overlay.addEventListener('click', () => {
+            profileImageInput.click();
+        });
+
+        profileImageInput.addEventListener('change', function (event) {
+            const [file] = event.target.files;
+            if (file) {
+                profileImage.src = URL.createObjectURL(file); // Update the src of the image element
+                submitButton.style.display = 'block';
+            }
+        });
+    </script>
 
 <%- include("partials/footer.ejs") %>

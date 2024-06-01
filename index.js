@@ -6,6 +6,14 @@ import bcrypt from "bcryptjs";
 import passport from "passport";
 import cookieSession from "cookie-session";
 import { Strategy } from "passport-local";
+import multer from 'multer';
+import { extname } from 'path';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import fs from 'fs/promises';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 const saltRounds = 10;
@@ -42,6 +50,20 @@ app.use(cookieSession({
     }
 }))
 
+// Set up storage engine
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, path.join(__dirname, 'public', 'images')); // Destination folder for uploaded files
+    },
+    filename: (req, file, cb) => {
+        // Generate unique filename
+        cb(null, file.fieldname + '-' + Date.now() + extname(file.originalname));
+    }
+});
+
+// Initialize multer
+const upload = multer({ storage: storage });
+
 app.use(passport.initialize());
 app.use(passport.session());
 
@@ -76,7 +98,11 @@ var globalMessage = {
 
 // HOME
 app.get("/", (req, res) => {
-    res.render("home.ejs");
+    if (req.isAuthenticated()) {
+        res.redirect("/home");
+    } else {
+        res.render("home.ejs");
+    }
 })
 
 app.get("/login", (req, res) => {
@@ -143,6 +169,28 @@ app.get("/chat/:friend_id", ensureAuthenticated, async (req, res) => {
         res.redirect("/");
     }
 })
+
+app.post('/upload-profile-picture', upload.single('picture'), async (req, res) => {
+    // Access uploaded file details via req.file
+    if (!req.file) {
+        return res.status(400).send('No files were uploaded.');
+    }
+    // Construct the URL to the uploaded file
+    const fileUrl = `${req.protocol}://${req.get('host')}/images/${req.file.filename}`;
+    try {
+        // Delete the previous profile image, if it exists
+        if (req.user.profile_image_url) {
+            const previousImagePath = req.user.profile_image_url.split('/').pop(); // Get the filename from the URL
+            await fs.unlink(`public/images/${previousImagePath}`);
+        }
+        req.user.profile_image_url = fileUrl;
+        await req.db.query("UPDATE users SET profile_image_url = $1 WHERE user_id = $2", [fileUrl, req.user.user_id]);
+        res.redirect("/profile");
+    } catch (error) {
+        console.error(error);
+        res.redirect("/")
+    }
+});
 
 app.post("/remove-friend", ensureAuthenticated, async (req, res) => {
     const friend_id = parseInt(req.body.friend_id);
