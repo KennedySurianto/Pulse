@@ -4,6 +4,7 @@ CREATE TABLE users (
 	user_id SERIAL PRIMARY KEY,
 	username VARCHAR(50) NOT NULL UNIQUE,
 	password_hash VARCHAR(100) NOT NULL,
+	profile_image_url VARCHAR(255) NOT NULL DEFAULT 'https://picsum.photos/200',
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 

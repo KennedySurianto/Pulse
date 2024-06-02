@@ -20,12 +20,18 @@ const saltRounds = 10;
 const { Pool } = pg;
 
 dotenv.config();
+// Development
+// const pool = new Pool({
+//     user: process.env.PG_USER,
+//     host: process.env.PG_HOST,
+//     database: process.env.PG_DATABASE,
+//     password: process.env.PG_PASSWORD,
+//     port: process.env.PG_PORT,
+// })
+
+// Production
 const pool = new Pool({
-    user: process.env.PG_USER,
-    host: process.env.PG_HOST,
-    database: process.env.PG_DATABASE,
-    password: process.env.PG_PASSWORD,
-    port: process.env.PG_PORT,
+    connectionString: process.env.POSTGRES_URL,
 })
 
 app.use(async (req, res, next) => {
@@ -53,7 +59,7 @@ app.use(cookieSession({
 // Set up storage engine
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        cb(null, path.join(__dirname, 'public', 'images')); // Destination folder for uploaded files
+        cb(null, 'public/images/'); // Destination folder for uploaded files
     },
     filename: (req, file, cb) => {
         // Generate unique filename
