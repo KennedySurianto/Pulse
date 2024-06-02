@@ -59,7 +59,7 @@ app.use(cookieSession({
 // Set up storage engine
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        cb(null, './public/images/'); // Destination folder for uploaded files
+        cb(null, path.join(__dirname, 'public/images/')); // Destination folder for uploaded files
     },
     filename: (req, file, cb) => {
         // Generate unique filename
