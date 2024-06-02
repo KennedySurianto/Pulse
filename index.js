@@ -56,15 +56,36 @@ app.use(cookieSession({
     }
 }))
 
+// Create the directory if it doesn't exist
+const ensureDirectoryExistence = (filePath) => {
+    const dirname = path.dirname(filePath);
+    if (fs.existsSync(dirname)) {
+        return true;
+    }
+    ensureDirectoryExistence(dirname);
+    try {
+        fs.mkdirSync(dirname);
+    } catch (err) {
+        console.error(`Error creating directory ${dirname}`, err);
+    }
+};
+
 // Set up storage engine
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        cb(null, path.join(__dirname, 'public/images/')); // Destination folder for uploaded files
+        const destPath = path.join(__dirname, 'public/images/');
+        ensureDirectoryExistence(destPath);
+        cb(null, destPath);
     },
     filename: (req, file, cb) => {
-        // Generate unique filename
-        cb(null, file.fieldname + '-' + Date.now() + extname(file.originalname));
+        cb(null, file.fieldname + '-' + Date.now() + path.extname(file.originalname));
     }
+});
+
+app.use((req, res, next) => {
+    const uploadDir = path.join(__dirname, 'public/images/');
+    ensureDirectoryExistence(uploadDir);
+    next();
 });
 
 // Initialize multer
@@ -205,25 +226,23 @@ app.post("/search-user", ensureAuthenticated, async (req, res) => {
     }
 })
 
+
 app.post('/upload-profile-picture', upload.single('picture'), ensureAuthenticated, async (req, res) => {
-    // Access uploaded file details via req.file
     if (!req.file) {
         return res.status(400).send('No files were uploaded.');
     }
-    // Construct the URL to the uploaded file
     const fileUrl = `${req.protocol}://${req.get('host')}/images/${req.file.filename}`;
     try {
-        // Delete the previous profile image, if it exists
         if (req.user.profile_image_url && !req.user.profile_image_url.includes("https")) {
-            const previousImagePath = req.user.profile_image_url.split('/').pop(); // Get the filename from the URL
-            await fs.unlink(`public/images/${previousImagePath}`);
+            const previousImagePath = path.join(__dirname, 'public/images/', path.basename(req.user.profile_image_url));
+            await fs.promises.unlink(previousImagePath);
         }
         req.user.profile_image_url = fileUrl;
         await req.db.query("UPDATE users SET profile_image_url = $1 WHERE user_id = $2", [fileUrl, req.user.user_id]);
         res.redirect("/profile");
     } catch (error) {
         console.error(error);
-        res.redirect("/")
+        res.redirect("/");
     }
 });
 
