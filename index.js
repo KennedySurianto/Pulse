@@ -185,9 +185,23 @@ app.get("/chat/:friend_id", ensureAuthenticated, async (req, res) => {
         console.error(error);
         res.redirect("/");
     }
-});
+})
 
-app.post('/upload-profile-picture', upload.single('picture'), async (req, res) => {
+app.post("/search-user", ensureAuthenticated, async (req, res) => {
+    const username = req.body.username;
+
+    try {
+        const users = await req.db.query("SELECT user_id, username, profile_image_url FROM users WHERE user_id <> $1 AND username ILIKE '%' || $2 || '%';", [req.user.user_id, username]);
+
+        res.render("auth_userlist.ejs", { users: users.rows, userActive: true });
+    } catch (error) {
+        console.error(error);
+        res.redirect("/");
+    }
+
+})
+
+app.post('/upload-profile-picture', upload.single('picture'), ensureAuthenticated, async (req, res) => {
     // Access uploaded file details via req.file
     if (!req.file) {
         return res.status(400).send('No files were uploaded.');
