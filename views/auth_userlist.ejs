@@ -1,21 +1,20 @@
 <%- include("partials/auth_header.ejs") %>
-<%- include("partials/auth_subheader.ejs") %>
 
 <div class="container py-4">
     <div class="border border-light p-5 mb-5">
         <h2 class="text-light">User List</h2>
         <hr style="color: white;">
         <ul class="list-group rounded-0">
-        <div class="col-12 mb-5">
-            <form action="/search-user" method="post">
-                <div class="input-group">
-                    <input type="text" name="username" class="form-control rounded-0" placeholder="Username" autocomplete="off"
-                        required>
-                    <button class="btn btn-primary rounded-0" type="submit">Search</button>
-                </div>
-            </form>
-        </div>
         <% if (locals.users && users.length > 0) { %>
+            <div class="col-12 mb-5">
+                <form action="/search-user" method="post">
+                    <div class="input-group">
+                        <input type="text" name="username" class="form-control rounded-0" placeholder="Username" autocomplete="off"
+                            required>
+                        <button class="btn btn-primary rounded-0" type="submit">Search</button>
+                    </div>
+                </form>
+            </div>
             <% users.forEach((u) => { %>
                 <li class="list-group-item d-flex justify-content-between align-items-center">
                     <div class="media">

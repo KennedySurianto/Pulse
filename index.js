@@ -167,7 +167,7 @@ app.get("/chat/:friend_id", ensureAuthenticated, async (req, res) => {
         let finalChatId;
         if (chatQuery.rowCount > 0) {
             const chat_id = chatQuery.rows[0].chat_id;
-            messages = await req.db.query("SELECT DISTINCT * FROM messages m JOIN users u ON u.user_id = m.sender_id WHERE m.chat_id = $1", [chat_id]);
+            messages = await req.db.query("SELECT DISTINCT m.*, u.user_id, username, profile_image_url FROM messages m JOIN users u ON u.user_id = m.sender_id WHERE m.chat_id = $1", [chat_id]);
             finalChatId = chat_id;
         } else {
             await req.db.query("BEGIN;");
@@ -178,7 +178,6 @@ app.get("/chat/:friend_id", ensureAuthenticated, async (req, res) => {
             messages = { rows: [] }; // Initialize messages to an empty array since there are no messages in a new chat
             finalChatId = newChatId;
         }
-
         res.render("auth_chat.ejs", { chat_id: finalChatId, messages: messages.rows, friend });
     } catch (error) {
         await req.db.query("ROLLBACK;");
@@ -198,7 +197,6 @@ app.post("/search-user", ensureAuthenticated, async (req, res) => {
         console.error(error);
         res.redirect("/");
     }
-
 })
 
 app.post('/upload-profile-picture', upload.single('picture'), ensureAuthenticated, async (req, res) => {

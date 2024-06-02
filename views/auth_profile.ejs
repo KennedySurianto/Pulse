@@ -1,5 +1,4 @@
 <%- include("partials/auth_header.ejs") %>
-<%- include("partials/auth_subheader.ejs") %>
 
     <style>
         .disabled-input {
@@ -73,7 +72,7 @@
             <!-- Username -->
             <div class="mb-3">
                 <label for="username" class="form-label text-light">Username</label>
-                <input type="text" id="username" class="form-control disabled-input" value="<%= user.username %>" readonly>
+                <input type="text" id="username" class="form-control disabled-input rounded-0" value="<%= user.username %>" readonly>
             </div>
             <hr style="color: white">
             <!-- Change Password Form -->
@@ -81,15 +80,15 @@
                 <h4 class="text-light">Change Password</h4>
                 <div class="mb-3">
                     <label for="currentPassword" class="form-label text-light">Current Password</label>
-                    <input type="password" id="currentPassword" name="currentPassword" class="form-control" required>
+                    <input type="password" id="currentPassword" name="currentPassword" class="form-control rounded-0" required>
                 </div>
                 <div class="mb-3">
                     <label for="newPassword" class="form-label text-light">New Password</label>
-                    <input type="password" id="newPassword" name="newPassword" class="form-control" required>
+                    <input type="password" id="newPassword" name="newPassword" class="form-control rounded-0" required>
                 </div>
                 <div class="mb-3">
                     <label for="confirmPassword" class="form-label text-light">Confirm New Password</label>
-                    <input type="password" id="confirmPassword" name="confirmPassword" class="form-control" required>
+                    <input type="password" id="confirmPassword" name="confirmPassword" class="form-control rounded-0" required>
                 </div>
                 <button type="submit" class="btn btn-primary">Change Password</button>
             </form>

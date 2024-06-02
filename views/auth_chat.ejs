@@ -1,5 +1,4 @@
 <%- include("partials/auth_header.ejs") %>
-<%- include("partials/auth_subheader.ejs") %>
 
 <!-- Chat Container -->
 <div class="container py-4">
@@ -15,13 +14,41 @@
                             <div class="media-body text-light">
                                 <div class="d-flex py-1">
                                     <div class=" d-flex flex-column justify-content-start">
-                                        <img src="https://via.placeholder.com/30" class="me-2 rounded-circle" alt="Friend Avatar">
+                                        <img src="<%= m.profile_image_url %>" class="me-2 rounded-circle" alt="Friend Avatar" style="width: 40px; height: 40px;">
                                     </div>
                                     <div>
                                         <div class="d-flex align-items-center">
                                             <h4 class="me-2"><%= m.username %></h4>
                                             <small>
-                                                <%= new Date(m.created_at).toLocaleTimeString([], {hour: '2-digit' , minute: '2-digit' }) %>
+                                                <%= (()=> {
+                                                    const date = new Date(m.created_at);
+                                                    const now = new Date();
+                                                
+                                                    // Get the time part in 24-hour format
+                                                    const time = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
+                                                
+                                                    // Function to check if two dates are on the same day
+                                                    const isSameDay = (d1, d2) =>
+                                                    d1.getFullYear() === d2.getFullYear() &&
+                                                    d1.getMonth() === d2.getMonth() &&
+                                                    d1.getDate() === d2.getDate();
+                                                
+                                                    // Check if the date is today
+                                                    if (isSameDay(date, now)) {
+                                                    return `Today ${time}`;
+                                                    }
+                                                
+                                                    // Check if the date is yesterday
+                                                    const yesterday = new Date();
+                                                    yesterday.setDate(now.getDate() - 1);
+                                                    if (isSameDay(date, yesterday)) {
+                                                    return `Yesterday ${time}`;
+                                                    }
+                                                
+                                                    // If neither, format as mm/dd/yyyy
+                                                    const formattedDate = date.toLocaleDateString([], { month: '2-digit', day: '2-digit', year: 'numeric' });
+                                                    return `${time} ${formattedDate}`;
+                                                })() %>
                                             </small>
                                         </div>
                                         <p><%= m.content %></p>
