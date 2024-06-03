@@ -30,6 +30,31 @@
         img {
             object-fit: cover;
         }
+
+        .username-text {
+            display: inline-block;
+            max-width: 150px; /* Adjust based on your layout needs */
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .profile-picture {
+            width: 40px;
+            height: 40px;
+        }
+
+        /* Media query for smaller screens */
+        @media (max-width: 576px) { /* Adjust the max-width as needed */
+            .username-text {
+                max-width: 100px; /* Reduce the max-width for smaller screens */
+                font-size: 20px;  /* Reduce the font size for smaller screens */
+            }
+            .profile-picture {
+                width: 30px;   /* Reduce the width for smaller screens */
+                height: 30px;  /* Reduce the height for smaller screens */
+            }
+        }
     </style>
 </head>
 

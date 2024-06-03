@@ -10,9 +10,11 @@
                         <li class="list-group-item d-flex justify-content-between align-items-center">
                             <div class="media">
                                 <div class="d-flex align-items-center fw-semibold fs-3">
-                                    <img src="<%= f.profile_image_url %>" class="me-2 rounded-circle"
-                                        alt="Friend Avatar" style="width: 40px; height: 40px;" >
-                                    <%= f.username %>
+                                    <img src="<%= f.profile_image_url %>" class="me-2 rounded-circle profile-picture"
+                                        alt="Friend Avatar">
+                                    <span class="username-text">
+                                        <%= f.username %>
+                                    </span>
                                 </div>
                             </div>
                             <div class="d-flex">

@@ -323,6 +323,9 @@ app.post("/register-post", async (req, res) => {
         if (checkUnique.rowCount > 0) {
             globalMessage.setMessage("danger", "Username already exist", "Try using a different username");
             return res.redirect("/register");
+        } else if (username.length > 15) {
+            globalMessage.setMessage("danger", "Invalid username", "Make sure the username length is less than or equal to 15 characters");
+            return res.redirect("/register");
         } else if (password.length < 8) {
             globalMessage.setMessage("danger", "Password invalid", "Make sure the password length is more or equal to 8 characters");
             return res.redirect("/register");

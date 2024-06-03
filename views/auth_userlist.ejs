@@ -19,8 +19,8 @@
                 <li class="list-group-item d-flex justify-content-between align-items-center">
                     <div class="media">
                         <div class="d-flex align-items-center fw-semibold fs-3">
-                            <img src="<%= u.profile_image_url %>" class="me-2 rounded-circle" alt="Friend Avatar" style="width: 40px; height: 40px;">
-                            <%= u.username %>
+                            <img src="<%= u.profile_image_url %>" class="me-2 rounded-circle profile-picture" alt="Friend Avatar">
+                            <span class="username-text"><%= u.username %></span>
                         </div>
                     </div>
                     <form action="/add-friend" method="post">
