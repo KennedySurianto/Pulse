@@ -154,7 +154,7 @@ app.get("/users", ensureAuthenticated, async (req, res) => {
 
 app.get("/profile", ensureAuthenticated, async (req, res) => {
     try {
-        res.render("auth_profile.ejs", { user: req.user, profileActive: true });
+        res.render("auth_profile.ejs", { user: req.user, profileActive: true, message: globalMessage.getMessage() });
     } catch (error) {
         console.log(error);
         res.redirect("/");
@@ -268,6 +268,36 @@ app.post("/message-post", async (req, res) => {
         res.redirect(`/chat/${friend_id}`);
     } catch (error) {
         console.log(error);
+        res.redirect("/");
+    }
+})
+
+app.post("/change-password", ensureAuthenticated, async (req, res) => {
+    const { currentPassword, newPassword, confirmPassword } = req.body;
+
+    try {
+        const userPasswordHash = req.user.password_hash;
+        const isMatch = await bcrypt.compare(currentPassword, userPasswordHash);
+        
+        if (!isMatch) {
+            console.log("password incorrect")
+            globalMessage.setMessage("danger", "Incorrect password", "Make sure you entered the correct password");
+        } else if (newPassword.length < 8) {
+            globalMessage.setMessage("danger", "Password invalid", "Make sure password is more than or equal to 8 characters");
+        } else if (newPassword != confirmPassword) {
+            globalMessage.setMessage("danger", "Password does not match", "Make sure the password match");
+        } else {
+            const salt = await bcrypt.genSalt(saltRounds);
+            const hashedNewPassword = await bcrypt.hash(newPassword, salt);
+            await req.db.query("UPDATE users SET password_hash = $1 WHERE user_id = $2",[
+                hashedNewPassword,
+                req.user.user_id
+            ]);
+            globalMessage.setMessage("success", "Password changed successfully", "Make sure to remember it");
+        }
+        res.redirect("/profile");
+    } catch (error) {
+        console.error(error);
         res.redirect("/");
     }
 })
