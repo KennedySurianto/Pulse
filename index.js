@@ -196,7 +196,7 @@ app.post("/search-user", ensureAuthenticated, async (req, res) => {
     const username = req.body.username;
 
     try {
-        const users = await req.db.query("SELECT user_id, username, profile_image_url FROM users WHERE user_id <> $1 AND username ILIKE '%' || $2 || '%';", [req.user.user_id, username]);
+        const users = await req.db.query("SELECT u.user_id, username, profile_image_url FROM users u WHERE u.user_id <> $1 AND u.user_id NOT IN (SELECT friend_id FROM friends WHERE user_id = $1) AND username ILIKE '%' || $2 || '%';", [req.user.user_id, username]);
 
         res.render("auth_userlist.ejs", { users: users.rows, userActive: true });
     } catch (error) {
