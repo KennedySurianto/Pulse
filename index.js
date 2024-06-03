@@ -214,7 +214,7 @@ app.post('/upload-profile-picture', upload.single('picture'), ensureAuthenticate
     const fileUrl = `${req.protocol}://${req.get('host')}/images/${req.file.filename}`;
     try {
         // Delete the previous profile image, if it exists
-        if (req.user.profile_image_url && !req.user.profile_image_url.includes("https")) {
+        if (req.user.profile_image_url && !req.user.profile_image_url.includes("default2201")) {
             const previousImagePath = req.user.profile_image_url.split('/').pop(); // Get the filename from the URL
             await fs.unlink(`public/images/${previousImagePath}`);
         }
@@ -322,7 +322,10 @@ app.post("/register-post", async (req, res) => {
 
         if (checkUnique.rowCount > 0) {
             globalMessage.setMessage("danger", "Username already exist", "Try using a different username");
-            res.redirect("/register");
+            return res.redirect("/register");
+        } else if (password.length < 8) {
+            globalMessage.setMessage("danger", "Password invalid", "Make sure the password length is more or equal to 8 characters");
+            return res.redirect("/register");
         } else {
             if (password !== password_confirmation) {
                 globalMessage.setMessage("danger", "Password doesn't match", "Make sure the password confirmation matches the password");
@@ -331,6 +334,7 @@ app.post("/register-post", async (req, res) => {
             bcrypt.hash(password, saltRounds, async (err, hash) => {
                 if (err) {
                     console.log(err);
+                    res.redirect("/");
                 } else {
                     const result = await req.db.query("INSERT INTO users (username, password_hash) VALUES ($1, $2) RETURNING *", [username, hash]);
                     const user = result.rows[0];
