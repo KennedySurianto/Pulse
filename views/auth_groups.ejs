@@ -1,0 +1,80 @@
+<%- include("partials/auth_header.ejs") %>
+
+<div class="container py-4">
+    <div class="border border-light p-5 mb-5">
+        <h2 class="text-light fw-bold text-uppercase">Group List</h2>
+        <hr style="color: white;">
+        <button class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#exampleModal">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-plus-square me-1" viewBox="0 0 16 16">
+                <path d="M14 1a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1zM2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2z"/>
+                <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4"/>
+            </svg>
+            Create group
+        </button>
+        <ul class="list-group rounded-0">
+            <% if (locals.groups && groups.length> 0) { %>
+                <% groups.forEach((g)=> { %>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <div class="media">
+                            <div class="d-flex align-items-center fw-semibold fs-3">
+                                <img src="" class="me-2 rounded-circle profile-picture"
+                                    alt="Group Avatar">
+                                <span class="username-text">
+                                    Group Name
+                                </span>
+                            </div>
+                        </div>
+                    </li>
+                <% }) %>
+            <% } else { %>
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <div class="media">
+                        <div class="media-body">
+                            <h5 class="pt-2">You don't have any groups yet.</h5>
+                            <a href=""></a>
+                        </div>
+                    </div>
+                </li>
+            <% } %>
+        </ul>
+    </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content rounded-0">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5 fw-bold text-uppercase" id="exampleModalLabel">Create New Group</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="form-floating mb-3 text-dark">
+                    <input type="text" name="groupName" class="form-control rounded-0" id="floatingInput" placeholder="name@example.com" autocomplete="off" required>
+                    <label for="groupName">Group Name</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" value="" id="flexCheckDefault">
+                    <label class="form-check-label" for="flexCheckDefault">
+                    Default checkbox
+                    </label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" value="" id="flexCheckChecked" checked>
+                    <label class="form-check-label" for="flexCheckChecked">
+                    Checked checkbox
+                    </label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form action="/remove-friend" method="post">
+                    <button type="submit" class="btn btn-success">Create</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<%- include("partials/footer.ejs") %>

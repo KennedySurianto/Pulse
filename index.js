@@ -21,18 +21,18 @@ const { Pool } = pg;
 
 dotenv.config();
 // Development
-// const pool = new Pool({
-//     user: process.env.PG_USER,
-//     host: process.env.PG_HOST,
-//     database: process.env.PG_DATABASE,
-//     password: process.env.PG_PASSWORD,
-//     port: process.env.PG_PORT,
-// })
+const pool = new Pool({
+    user: process.env.PG_USER,
+    host: process.env.PG_HOST,
+    database: process.env.PG_DATABASE,
+    password: process.env.PG_PASSWORD,
+    port: process.env.PG_PORT,
+})
 
 // Production
-const pool = new Pool({
-    connectionString: process.env.POSTGRES_URL,
-})
+// const pool = new Pool({
+//     connectionString: process.env.POSTGRES_URL,
+// })
 
 app.use(async (req, res, next) => {
     try {
@@ -192,6 +192,10 @@ app.get("/chat/:friend_id", ensureAuthenticated, async (req, res) => {
     }
 })
 
+app.get("/groups", ensureAuthenticated, async (req, res) => {
+    res.render("auth_groups.ejs", { groupActive: true });
+})
+
 app.post("/search-user", ensureAuthenticated, async (req, res) => {
     const username = req.body.username;
 
@@ -278,7 +282,7 @@ app.post("/change-password", ensureAuthenticated, async (req, res) => {
     try {
         const userPasswordHash = req.user.password_hash;
         const isMatch = await bcrypt.compare(currentPassword, userPasswordHash);
-        
+
         if (!isMatch) {
             console.log("password incorrect")
             globalMessage.setMessage("danger", "Incorrect password", "Make sure you entered the correct password");
@@ -289,7 +293,7 @@ app.post("/change-password", ensureAuthenticated, async (req, res) => {
         } else {
             const salt = await bcrypt.genSalt(saltRounds);
             const hashedNewPassword = await bcrypt.hash(newPassword, salt);
-            await req.db.query("UPDATE users SET password_hash = $1 WHERE user_id = $2",[
+            await req.db.query("UPDATE users SET password_hash = $1 WHERE user_id = $2", [
                 hashedNewPassword,
                 req.user.user_id
             ]);

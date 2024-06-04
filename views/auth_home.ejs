@@ -19,17 +19,36 @@
                             </div>
                             <div class="d-flex">
                                 <a href="/chat/<%= f.friend_id %>"
-                                    class="btn btn-primary rounded-pill me-2">Chat</a>
-                                <form action="/remove-friend" method="post">
-                                    <input type="hidden" name="friend_id" value="<%= f.friend_id %>">
-                                    <button type="submit" class="btn btn-danger rounded-pill">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                    class="btn btn-primary rounded-pill me-2">Chat
+                                </a>
+                                <button type="button" class="btn btn-danger rounded-pill" data-bs-toggle="modal" data-bs-target="#exampleModal">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
                                             fill="currentColor" class="bi bi-x" viewBox="0 0 16 16">
                                             <path
                                                 d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708" />
                                         </svg>
-                                    </button>
-                                </form>
+                                </button>
+
+                                <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content rounded-0">
+                                            <div class="modal-header">
+                                                <h1 class="modal-title fs-5 fw-bold text-uppercase" id="exampleModalLabel">Confirmation</h1>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                Are you sure you want to remove <strong><%= f.username %></strong> from your friend list?
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No</button>
+                                                <form action="/remove-friend" method="post">
+                                                    <input type="hidden" name="friend_id" value="<%= f.friend_id %>">
+                                                    <button type="submit" class="btn btn-danger">Remove</button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </li>
                     <% }) %>
