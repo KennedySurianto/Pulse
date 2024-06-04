@@ -44,34 +44,49 @@
 <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content rounded-0">
-            <div class="modal-header">
-                <h1 class="modal-title fs-5 fw-bold text-uppercase" id="exampleModalLabel">Create New Group</h1>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <div class="form-floating mb-3 text-dark">
-                    <input type="text" name="groupName" class="form-control rounded-0" id="floatingInput" placeholder="name@example.com" autocomplete="off" required>
-                    <label for="groupName">Group Name</label>
+            <% if (locals.friends && friends.length > 0) { %>
+            <form action="/create-group" method="post">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5 fw-bold text-uppercase" id="exampleModalLabel">Create New Group</h1>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="form-check">
-                    <input class="form-check-input" type="checkbox" value="" id="flexCheckDefault">
-                    <label class="form-check-label" for="flexCheckDefault">
-                    Default checkbox
-                    </label>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="groupName" class="form-label fw-semibold">Group Name</label>
+                        <input type="text" name="groupName" class="form-control rounded-0" placeholder="Group Mantep" required>
+                    </div>
+                    <p class="form-label fw-semibold">Add Group Members</p>
+                    <div class="btn-group-vertical col-12" role="group" aria-label="Basic checkbox toggle button group">
+                        <% friends.forEach((f) => { %>
+                            <input type="checkbox" class="btn-check" name="member_<%= f.user_id %>" id="member_<%= f.user_id %>" autocomplete="off">
+                            <label class="btn btn-outline-primary rounded-0" for="member_<%= f.user_id %>">
+                                <div class="d-flex align-items-center fw-semibold fs-3">
+                                    <img src="<%= f.profile_image_url %>" class="me-2 rounded-circle" alt="Friend Avatar" style="width: 24px; height: 24px;">
+                                    <span style="font-size: 16px;"><%= f.username %></span>
+                                </div>
+                            </label>
+                        <% }) %>
+                    </div>
                 </div>
-                <div class="form-check">
-                    <input class="form-check-input" type="checkbox" value="" id="flexCheckChecked" checked>
-                    <label class="form-check-label" for="flexCheckChecked">
-                    Checked checkbox
-                    </label>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success">
+                        Create
+                    </button>
                 </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <form action="/remove-friend" method="post">
-                    <button type="submit" class="btn btn-success">Create</button>
-                </form>
-            </div>
+            </form>
+            <% } else { %>
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5 fw-bold text-uppercase" id="exampleModalLabel">Create New Group</h1>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p><span>You don't have any friends yet. </span><a href="/users">Add now!</a></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                </div>
+            <% } %>
         </div>
     </div>
 </div>

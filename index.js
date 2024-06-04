@@ -193,7 +193,37 @@ app.get("/chat/:friend_id", ensureAuthenticated, async (req, res) => {
 })
 
 app.get("/groups", ensureAuthenticated, async (req, res) => {
-    res.render("auth_groups.ejs", { groupActive: true });
+    try {
+        const groups = await req.db.query("SELECT * FROM chats c JOIN participants p ON p.chat_id = c.chat_id WHERE c.is_group = TRUE AND p.user_id = $1;", [req.user.user_id]);
+
+        const friends = await req.db.query("SELECT u.user_id, username, profile_image_url FROM friends f JOIN users u ON u.user_id = f.friend_id WHERE f.user_id = $1", [req.user.user_id]);
+        
+        res.render("auth_groups.ejs", { groupActive: true, groups: groups.rows, friends: friends.rows });
+    } catch (error) {
+        console.error(error);
+        res.redirect("/");
+    }
+})
+
+app.post("/create-group", ensureAuthenticated, async (req, res) => {
+    const { groupName, ...members } = req.body;
+    const memberIds = Object.keys(members).map(key => key.replace('member_', ''));
+
+    try {
+        await req.db.query("BEGIN;");
+        const newChat = await req.db.query("INSERT INTO chats (chat_name, is_group) VALUES ($1, $2) RETURNING chat_id;", [groupName, true]);
+        const chat_id = newChat.rows[0].chat_id;
+        await req.db.query("INSERT INTO participants (chat_id, user_id) VALUES ($1, $2)", [chat_id, req.user.user_id]);
+        for (const memberId of memberIds) {
+            await req.db.query("INSERT INTO participants (chat_id, user_id) VALUES ($1, $2);", [chat_id, memberId]);
+        }
+        await req.db.query("COMMIT;")
+        res.redirect("/groups");
+    } catch (error) {
+        await req.db.query("ROLLBACK;");
+        console.error(error);
+        res.redirect("/");
+    }
 })
 
 app.post("/search-user", ensureAuthenticated, async (req, res) => {
