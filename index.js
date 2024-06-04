@@ -194,10 +194,23 @@ app.get("/chat/:friend_id", ensureAuthenticated, async (req, res) => {
 
 app.get("/groups", ensureAuthenticated, async (req, res) => {
     try {
-        const groups = await req.db.query("SELECT * FROM chats c JOIN participants p ON p.chat_id = c.chat_id WHERE c.is_group = TRUE AND p.user_id = $1;", [req.user.user_id]);
+        const getGroupsQuery = `
+            SELECT *
+            FROM chats c
+                JOIN groups g ON g.chat_id = c.chat_id
+                JOIN participants p ON p.chat_id = c.chat_id
+            WHERE p.user_id = $1;
+        `;
+        const getFriendsQuery = `
+            SELECT u.user_id, username, profile_image_url 
+            FROM friends f 
+                JOIN users u ON u.user_id = f.friend_id 
+            WHERE f.user_id = $1
+        `
+        const groups = await req.db.query(getGroupsQuery, [req.user.user_id]);
 
-        const friends = await req.db.query("SELECT u.user_id, username, profile_image_url FROM friends f JOIN users u ON u.user_id = f.friend_id WHERE f.user_id = $1", [req.user.user_id]);
-        
+        const friends = await req.db.query(getFriendsQuery, [req.user.user_id]);
+
         res.render("auth_groups.ejs", { groupActive: true, groups: groups.rows, friends: friends.rows });
     } catch (error) {
         console.error(error);
@@ -205,18 +218,38 @@ app.get("/groups", ensureAuthenticated, async (req, res) => {
     }
 })
 
-app.post("/create-group", ensureAuthenticated, async (req, res) => {
-    const { groupName, ...members } = req.body;
+app.post("/create-group", upload.single('picture'), ensureAuthenticated, async (req, res) => {
+    if (!req.file) {
+        return res.status(400).send('No files were uploaded.');
+    }
+    const fileUrl = `${req.protocol}://${req.get('host')}/images/${req.file.filename}`;
+
+    const { groupName, picture, ...members } = req.body;
     const memberIds = Object.keys(members).map(key => key.replace('member_', ''));
 
+    const insertIntoChatsQuery = `
+        INSERT INTO chats (chat_id) VALUES (DEFAULT) 
+        RETURNING chat_id;
+    `;
+    const insertIntoGroupsQuery = `
+        INSERT INTO groups (chat_id, group_name, group_image_url) VALUES ($1, $2, $3);
+    `;
+    const insertIntoParticipantsQuery = `
+        INSERT INTO participants (chat_id, user_id) VALUES ($1, $2);
+    `;
     try {
         await req.db.query("BEGIN;");
-        const newChat = await req.db.query("INSERT INTO chats (chat_name, is_group) VALUES ($1, $2) RETURNING chat_id;", [groupName, true]);
+
+        const newChat = await req.db.query(insertIntoChatsQuery);
         const chat_id = newChat.rows[0].chat_id;
-        await req.db.query("INSERT INTO participants (chat_id, user_id) VALUES ($1, $2)", [chat_id, req.user.user_id]);
+
+        await req.db.query(insertIntoGroupsQuery, [chat_id, groupName, fileUrl])
+        await req.db.query(insertIntoParticipantsQuery, [chat_id, req.user.user_id]);
+
         for (const memberId of memberIds) {
-            await req.db.query("INSERT INTO participants (chat_id, user_id) VALUES ($1, $2);", [chat_id, memberId]);
+            await req.db.query(insertIntoParticipantsQuery, [chat_id, memberId]);
         }
+
         await req.db.query("COMMIT;")
         res.redirect("/groups");
     } catch (error) {
@@ -248,7 +281,7 @@ app.post('/upload-profile-picture', upload.single('picture'), ensureAuthenticate
     const fileUrl = `${req.protocol}://${req.get('host')}/images/${req.file.filename}`;
     try {
         // Delete the previous profile image, if it exists
-        if (req.user.profile_image_url && !req.user.profile_image_url.includes("default2201")) {
+        if (req.user.profile_image_url && !req.user.profile_image_url.includes("default2201.png") && req.user.profile_image_url !== "https://picsum.photos/200") {
             const previousImagePath = req.user.profile_image_url.split('/').pop(); // Get the filename from the URL
             await fs.unlink(`public/images/${previousImagePath}`);
         }
@@ -276,14 +309,14 @@ app.post("/remove-friend", ensureAuthenticated, async (req, res) => {
 
 app.post("/add-friend", ensureAuthenticated, async (req, res) => {
     const friend_id = parseInt(req.body.user_id);
-    // console.log(friend_id);
+    const wasPending = req.body.wasPending;
     try {
         await req.db.query("INSERT INTO friends (user_id, friend_id) VALUES ($1, $2)", [
             req.user.user_id,
             friend_id
         ]);
         globalMessage.setMessage("success", "Friend added successfully", "Try chatting now");
-        res.redirect("/home");
+        (wasPending) ? res.redirect("/pending") : res.redirect("/users");
     } catch (error) {
         console.log(error);
         res.redirect("/");
@@ -298,7 +331,6 @@ app.post("/message-post", async (req, res) => {
 
     try {
         await req.db.query("INSERT INTO messages (sender_id, content, chat_id) VALUES ($1, $2, $3)", [sender_id, content, chat_id]);
-
         res.redirect(`/chat/${friend_id}`);
     } catch (error) {
         console.log(error);
@@ -373,7 +405,8 @@ app.post("/register-post", async (req, res) => {
                     console.log(err);
                     res.redirect("/");
                 } else {
-                    const result = await req.db.query("INSERT INTO users (username, password_hash) VALUES ($1, $2) RETURNING *", [username, hash]);
+                    const fileUrl = `${req.protocol}://${req.get('host')}/images/default2201.png`;
+                    const result = await req.db.query("INSERT INTO users (username, password_hash, profile_image_url) VALUES ($1, $2, $3) RETURNING *", [username, hash, fileUrl]);
                     const user = result.rows[0];
 
                     req.login(user, (err) => {

@@ -20,6 +20,7 @@
                             <a href="/chat/<%= p.user_id %>" class="btn btn-primary rounded-pill me-2">Chat</a>
                             <form action="/add-friend" method="post">
                                 <input type="hidden" name="user_id" value="<%= p.user_id %>">
+                                <input type="hidden" name="wasPending" value="true">
                                 <button type="submit" class="btn btn-success rounded-pill">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-check"
                                         viewBox="0 0 16 16">

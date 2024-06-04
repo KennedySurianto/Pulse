@@ -2,8 +2,8 @@
 -- TO INSERT: username, password_hash
 CREATE TABLE users (
 	user_id SERIAL PRIMARY KEY,
-	username VARCHAR(50) NOT NULL UNIQUE,
-	password_hash VARCHAR(100) NOT NULL,
+	username VARCHAR(20) NOT NULL UNIQUE,
+	password_hash VARCHAR(255) NOT NULL,
 	profile_image_url VARCHAR(255) NOT NULL DEFAULT 'https://picsum.photos/200',
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
@@ -18,9 +18,14 @@ CREATE TABLE friends (
 -- TO INSERT: chats (chat_id) VALUES (DEFAULT)
 CREATE TABLE chats (
 	chat_id SERIAL PRIMARY KEY,
-	chat_name VARCHAR(20),
-	is_group BOOLEAN NOT NULL,
 	created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- TO INSERT: chat_id, group_name, group_image_url
+CREATE TABLE groups (
+	chat_id INT NOT NULL UNIQUE REFERENCES chats(chat_id) ON DELETE CASCADE,
+	group_name VARCHAR(20) NOT NULL,
+	group_image_url VARCHAR(255) NOT NULL DEFAULT 'https://picsum.photos/200'
 );
 
 -- TO INSERT: chat_id, user_id
