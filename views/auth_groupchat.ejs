@@ -1,0 +1,92 @@
+<%- include("partials/auth_header.ejs") %>
+
+<!-- Chat Container -->
+<div class="container py-4">
+    <div class="row h-100 m-1">
+        <div class="border border-light p-5 pb-2mb-5">
+
+            <!-- Chat Messages -->
+            <div class="col-12 p-3 overflow-y-auto" id="chat-messages">
+                <!-- Add more messages here... -->
+                <% if (locals.messages && messages.length > 0) { %>
+                    <% messages.forEach((m) => { %>
+                        <div class="media mb-1">
+                            <div class="media-body text-light">
+                                <div class="d-flex py-1">
+                                    <div class=" d-flex flex-column justify-content-start">
+                                        <img src="<%= m.profile_image_url %>" class="me-2 rounded-circle profile-picture" alt="Friend Avatar" style="width: 40px; height: 40px;">
+                                    </div>
+                                    <div>
+                                        <div class="d-flex align-items-center">
+                                            <h4 class="me-2"><%= m.username %></h4>
+                                            <small>
+                                                <%= (()=> {
+                                                    const date = new Date(m.created_at);
+                                                    const now = new Date();
+                                                    
+                                                    // Function to get the time part in 24-hour format
+                                                    const getTime = (date) => {
+                                                        const hours = String(date.getHours()).padStart(2, '0');
+                                                        const minutes = String(date.getMinutes()).padStart(2, '0');
+                                                        return `${hours}:${minutes}`;
+                                                    };
+                                                
+                                                    // Function to check if two dates are on the same day
+                                                    const isSameDay = (d1, d2) =>
+                                                        d1.getFullYear() === d2.getFullYear() &&
+                                                        d1.getMonth() === d2.getMonth() &&
+                                                        d1.getDate() === d2.getDate();
+                                                
+                                                    // Get the time part
+                                                    const time = getTime(date);
+                                                
+                                                    // Check if the date is today
+                                                    if (isSameDay(date, now)) {
+                                                        return `Today ${time}`;
+                                                    }
+                                                
+                                                    // Check if the date is yesterday
+                                                    const yesterday = new Date();
+                                                    yesterday.setDate(now.getDate() - 1);
+                                                    if (isSameDay(date, yesterday)) {
+                                                        return `Yesterday ${time}`;
+                                                    }
+                                                
+                                                    // If neither, format as mm/dd/yyyy
+                                                    const formattedDate = date.toLocaleDateString([], { month: '2-digit', day: '2-digit', year: 'numeric' });
+                                                    return `${time} ${formattedDate}`;
+                                                })() %>
+                                                
+                                            </small>
+                                        </div>
+                                        <p><%= m.content %></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    <% }) %>
+                <% } %>
+            </div>
+
+            <!-- Chat Input -->
+            <div class="col-12 mb-5">
+                <form action="/message-group" method="post">
+                    <div class="input-group">
+                        <input type="hidden" name="chat_id" value="<%= group.chat_id %>">
+
+                        <input type="text" name="content" class="form-control" placeholder="Message <%= group.group_name %>" autocomplete="off" required>
+                        <button class="btn btn-primary rounded-0" type="submit">Send</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    window.onload = function () {
+        window.scrollTo({ top: document.body.scrollHeight, behavior: 'instant' });
+    };
+</script>
+
+<%- include("partials/footer.ejs") %>

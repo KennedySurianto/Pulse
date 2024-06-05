@@ -218,6 +218,32 @@ app.get("/groups", ensureAuthenticated, async (req, res) => {
     }
 })
 
+app.get("/group-chat/:group_id", ensureAuthenticated, async (req, res) => {
+    const group_id = req.params.group_id;
+    const getMessagesQuery = `
+        SELECT 
+            message_id, content, m.created_at,
+            chat_id, sender_id, user_id, username, profile_image_url
+        FROM messages m
+            JOIN users u ON u.user_id = m.sender_id
+        WHERE m.chat_id = $1
+        ORDER BY m.created_at ASC;
+    `;
+    const getGroupQuery = `
+        SELECT * FROM groups WHERE chat_id = $1;
+    `;
+    try {
+        const messages = await req.db.query(getMessagesQuery, [group_id]);
+        const group = await req.db.query(getGroupQuery, [group_id]);
+        // console.log("messages.rows: ", messages.rows);
+        // console.log("group.rows[0]: ", group.rows[0]);
+        res.render("auth_groupchat.ejs", { messages: messages.rows, group: group.rows[0] });
+    } catch (error) {
+        console.error(error);
+        res.redirect("/");
+    }
+})
+
 app.post("/create-group", upload.single('picture'), ensureAuthenticated, async (req, res) => {
     if (!req.file) {
         return res.status(400).send('No files were uploaded.');
@@ -323,7 +349,21 @@ app.post("/add-friend", ensureAuthenticated, async (req, res) => {
     }
 })
 
-app.post("/message-post", async (req, res) => {
+app.post("/message-group", ensureAuthenticated, async(req, res) => {
+    const sender_id = parseInt(req.user.user_id);
+    const content = req.body.content;
+    const chat_id = parseInt(req.body.chat_id);
+
+    try {
+        await req.db.query("INSERT INTO messages (sender_id, content, chat_id) VALUES ($1, $2, $3)", [sender_id, content, chat_id]);
+        res.redirect(`/group-chat/${chat_id}`);
+    } catch (error) {
+        console.error(error);
+        res.redirect("/");
+    }
+})
+
+app.post("/message-post", ensureAuthenticated, async (req, res) => {
     const sender_id = parseInt(req.user.user_id);
     const content = req.body.content;
     const chat_id = parseInt(req.body.chat_id);

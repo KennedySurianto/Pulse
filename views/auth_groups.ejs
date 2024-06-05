@@ -12,7 +12,7 @@
             Create group
         </button>
         <ul class="list-group rounded-0">
-            <% if (locals.groups && groups.length> 0) { %>
+            <% if (locals.groups && groups.length > 0) { %>
                 <% groups.forEach((g)=> { %>
                     <li class="list-group-item d-flex justify-content-between align-items-center">
                         <div class="media">
@@ -24,7 +24,8 @@
                                 </span>
                             </div>
                         </div>
-                        <a href="/chat/<%= g.chat_id %>" class="btn btn-primary rounded-pill me-2">Chat
+                        <a href="/group-chat/<%= g.chat_id %>" class="btn btn-primary rounded-pill me-2">
+                            Chat
                         </a>
                     </li>
                 <% }) %>
