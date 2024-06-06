@@ -24,9 +24,10 @@
                                 </span>
                             </div>
                         </div>
-                        <a href="/group-chat/<%= g.chat_id %>" class="btn btn-primary rounded-pill me-2">
-                            Chat
-                        </a>
+                        <form action="/group-chat" method="post">
+                            <input type="hidden" name="chat_id" value="<%= g.chat_id %>">
+                            <button type="submit" class="btn btn-primary rounded-pill me-2">Chat</button>
+                        </form>
                     </li>
                 <% }) %>
             <% } else { %>

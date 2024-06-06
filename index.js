@@ -161,8 +161,14 @@ app.get("/profile", ensureAuthenticated, async (req, res) => {
     }
 })
 
-app.get("/chat/:friend_id", ensureAuthenticated, async (req, res) => {
-    const friend_id = req.params.friend_id;
+app.post("/chat", ensureAuthenticated, async (req, res) => {
+    req.session.friend_id = req.body.friend_id;
+    console.log(req.session.friend_id)
+    res.redirect("/chat");
+})
+
+app.get("/chat", ensureAuthenticated, async (req, res) => {
+    const friend_id = req.session.friend_id;
     try {
         let chatQuery = await req.db.query("SELECT DISTINCT p1.chat_id FROM participants p1 JOIN participants p2 ON p1.chat_id = p2.chat_id WHERE p1.user_id = $1 AND p2.user_id = $2", [req.user.user_id, friend_id]);
 
@@ -176,39 +182,43 @@ app.get("/chat/:friend_id", ensureAuthenticated, async (req, res) => {
             messages = await req.db.query("SELECT DISTINCT m.*, u.user_id, username, profile_image_url FROM messages m JOIN users u ON u.user_id = m.sender_id WHERE m.chat_id = $1", [chat_id]);
             finalChatId = chat_id;
         } else {
-            await req.db.query("BEGIN;");
-            const newChatQuery = await req.db.query("INSERT INTO chats DEFAULT VALUES RETURNING chat_id");
-            const newChatId = newChatQuery.rows[0].chat_id;
-            await req.db.query("INSERT INTO participants (chat_id, user_id) VALUES ($1, $2), ($1, $3)", [newChatId, req.user.user_id, friend_id]);
-            await req.db.query("COMMIT;");
-            messages = { rows: [] }; // Initialize messages to an empty array since there are no messages in a new chat
-            finalChatId = newChatId;
+            try {
+                await req.db.query("BEGIN;");
+                const newChatQuery = await req.db.query("INSERT INTO chats DEFAULT VALUES RETURNING chat_id");
+                const newChatId = newChatQuery.rows[0].chat_id;
+                await req.db.query("INSERT INTO participants (chat_id, user_id) VALUES ($1, $2), ($1, $3)", [newChatId, req.user.user_id, friend_id]);
+                await req.db.query("COMMIT;");
+                messages = { rows: [] }; // Initialize messages to an empty array since there are no messages in a new chat
+                finalChatId = newChatId;
+            } catch (error) {
+                await req.db.query("ROLLBACK;");
+                console.error(error);
+                res.redirect("/");
+            }
         }
         res.render("auth_chat.ejs", { chat_id: finalChatId, messages: messages.rows, friend });
     } catch (error) {
-        await req.db.query("ROLLBACK;");
         console.error(error);
         res.redirect("/");
     }
 })
 
 app.get("/groups", ensureAuthenticated, async (req, res) => {
-    try {
-        const getGroupsQuery = `
+    const getGroupsQuery = `
             SELECT *
             FROM chats c
                 JOIN groups g ON g.chat_id = c.chat_id
                 JOIN participants p ON p.chat_id = c.chat_id
             WHERE p.user_id = $1;
         `;
-        const getFriendsQuery = `
+    const getFriendsQuery = `
             SELECT u.user_id, username, profile_image_url 
             FROM friends f 
                 JOIN users u ON u.user_id = f.friend_id 
             WHERE f.user_id = $1
-        `
+        `;
+    try {
         const groups = await req.db.query(getGroupsQuery, [req.user.user_id]);
-
         const friends = await req.db.query(getFriendsQuery, [req.user.user_id]);
 
         res.render("auth_groups.ejs", { groupActive: true, groups: groups.rows, friends: friends.rows });
@@ -218,8 +228,14 @@ app.get("/groups", ensureAuthenticated, async (req, res) => {
     }
 })
 
-app.get("/group-chat/:group_id", ensureAuthenticated, async (req, res) => {
-    const group_id = req.params.group_id;
+app.post("/group-chat", ensureAuthenticated, async (req, res) => {
+    const group_id = req.body.chat_id;
+    req.session.group_id = group_id;
+    res.redirect("/group-chat");
+})
+
+app.get("/group-chat", ensureAuthenticated, async (req, res) => {
+    const group_id = req.session.group_id;
     const getMessagesQuery = `
         SELECT 
             message_id, content, m.created_at,
@@ -232,12 +248,22 @@ app.get("/group-chat/:group_id", ensureAuthenticated, async (req, res) => {
     const getGroupQuery = `
         SELECT * FROM groups WHERE chat_id = $1;
     `;
+    const checkParticipantQuery = `
+        SELECT *
+        FROM participants
+        WHERE user_id = $1 AND chat_id = $2;
+    `
     try {
-        const messages = await req.db.query(getMessagesQuery, [group_id]);
-        const group = await req.db.query(getGroupQuery, [group_id]);
-        // console.log("messages.rows: ", messages.rows);
-        // console.log("group.rows[0]: ", group.rows[0]);
-        res.render("auth_groupchat.ejs", { messages: messages.rows, group: group.rows[0] });
+        const checkUser = await req.db.query(checkParticipantQuery, [req.user.user_id, group_id]);
+        if (checkUser.rowCount > 0) {
+            const messages = await req.db.query(getMessagesQuery, [group_id]);
+            const group = await req.db.query(getGroupQuery, [group_id]);
+            // console.log("messages.rows: ", messages.rows);
+            // console.log("group.rows[0]: ", group.rows[0]);
+            res.render("auth_groupchat.ejs", { messages: messages.rows, group: group.rows[0] });
+        } else {
+            res.redirect("/groups");
+        }
     } catch (error) {
         console.error(error);
         res.redirect("/");
@@ -245,10 +271,8 @@ app.get("/group-chat/:group_id", ensureAuthenticated, async (req, res) => {
 })
 
 app.post("/create-group", upload.single('picture'), ensureAuthenticated, async (req, res) => {
-    if (!req.file) {
-        return res.status(400).send('No files were uploaded.');
-    }
-    const fileUrl = `${req.protocol}://${req.get('host')}/images/${req.file.filename}`;
+    let fileUrl = `${req.protocol}://${req.get('host')}/images/`;
+    fileUrl += req.file ? req.file.filename : 'default2202.png';
 
     const { groupName, picture, ...members } = req.body;
     const memberIds = Object.keys(members).map(key => key.replace('member_', ''));
@@ -349,14 +373,14 @@ app.post("/add-friend", ensureAuthenticated, async (req, res) => {
     }
 })
 
-app.post("/message-group", ensureAuthenticated, async(req, res) => {
+app.post("/message-group", ensureAuthenticated, async (req, res) => {
     const sender_id = parseInt(req.user.user_id);
     const content = req.body.content;
     const chat_id = parseInt(req.body.chat_id);
 
     try {
         await req.db.query("INSERT INTO messages (sender_id, content, chat_id) VALUES ($1, $2, $3)", [sender_id, content, chat_id]);
-        res.redirect(`/group-chat/${chat_id}`);
+        res.redirect(`/group-chat`);
     } catch (error) {
         console.error(error);
         res.redirect("/");
@@ -367,11 +391,10 @@ app.post("/message-post", ensureAuthenticated, async (req, res) => {
     const sender_id = parseInt(req.user.user_id);
     const content = req.body.content;
     const chat_id = parseInt(req.body.chat_id);
-    const friend_id = parseInt(req.body.friend_id);
 
     try {
         await req.db.query("INSERT INTO messages (sender_id, content, chat_id) VALUES ($1, $2, $3)", [sender_id, content, chat_id]);
-        res.redirect(`/chat/${friend_id}`);
+        res.redirect(`/chat`);
     } catch (error) {
         console.log(error);
         res.redirect("/");
