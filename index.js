@@ -11,13 +11,16 @@ import { extname } from 'path';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs/promises';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+import { Server } from 'socket.io';
+import http from 'http';
 
 const app = express();
 const saltRounds = 10;
 const { Pool } = pg;
+const server = http.createServer(app);
+const io = new Server(server);
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 dotenv.config();
 // Development
@@ -196,7 +199,7 @@ app.get("/chat", ensureAuthenticated, async (req, res) => {
                 res.redirect("/");
             }
         }
-        res.render("auth_chat.ejs", { chat_id: finalChatId, messages: messages.rows, friend });
+        res.render("auth_chat.ejs", { chat_id: finalChatId, messages: messages.rows, friend, user: req.user });
     } catch (error) {
         console.error(error);
         res.redirect("/");
@@ -309,6 +312,66 @@ app.post("/create-group", upload.single('picture'), ensureAuthenticated, async (
     }
 })
 
+// TEST
+
+app.get('/test', (req, res) => {
+    res.render('test_socket');
+});
+
+io.on('connection', (socket) => {
+    console.log('a user connected');
+
+    // Join a chat room
+    socket.on('join chat', (chat_id) => {
+        socket.join(chat_id);
+    });
+
+    // Handle events (e.g., chat messages)
+    socket.on('chat message', async (msg) => {
+        // Extract message data from payload
+        const { chat_id, content, sender_id} = msg;
+        console.log('msg:', msg);
+
+        try {
+            const db = await pool.connect();
+
+            // Insert message into the database
+            const insertedMessage = await db.query("INSERT INTO messages (chat_id, content, sender_id) VALUES ($1, $2, $3) RETURNING *", [chat_id, content, sender_id]);
+
+            // Check if any rows were inserted
+            if (insertedMessage.rows.length > 0) {
+                const messageId = insertedMessage.rows[0].message_id;
+
+                // Retrieve the inserted message along with additional user information
+                const message = await db.query("SELECT DISTINCT m.*, u.user_id, username, profile_image_url FROM messages m JOIN users u ON u.user_id = m.sender_id WHERE message_id = $1", [messageId]);
+
+                // Check if the message was retrieved
+                if (message.rows.length > 0) {
+                    const messageToEmit = message.rows[0];
+                    console.log('msgtoemit:', messageToEmit);
+
+                    // Broadcast the message to all clients
+                    io.emit('chat message', messageToEmit);
+                } else {
+                    console.error("Failed to retrieve the inserted message");
+                }
+            } else {
+                console.error("No rows were inserted");
+            }
+
+            db.release();
+        } catch (error) {
+            console.error(error);
+        }
+    });
+
+
+    // Handle disconnection
+    socket.on('disconnect', () => {
+        console.log('user disconnected');
+    });
+});
+
 // app.post("/search-user", ensureAuthenticated, async (req, res) => {
 //     const username = req.body.username;
 
@@ -393,7 +456,9 @@ app.post("/message-post", ensureAuthenticated, async (req, res) => {
     const chat_id = parseInt(req.body.chat_id);
 
     try {
-        await req.db.query("INSERT INTO messages (sender_id, content, chat_id) VALUES ($1, $2, $3)", [sender_id, content, chat_id]);
+        const result = await req.db.query('INSERT INTO messages (sender_id, content, chat_id) VALUES ($1, $2, $3) RETURNING *', [sender_id, content, chat_id]);
+        const message = result.rows[0];
+        io.to(chat_id).emit('chat message', message); // Emit message to specific chat room
         res.redirect(`/chat`);
     } catch (error) {
         console.log(error);
@@ -531,6 +596,10 @@ passport.deserializeUser((user, cb) => {
     cb(null, user);
 })
 
-app.listen(process.env.PORT, '0.0.0.0', () => {
-    console.log(`Listening on port ${process.env.PORT}.`);
+server.listen(process.env.PORT, '0.0.0.0', () => {
+    console.log(`Server listening on port ${process.env.PORT}.`)
 })
+
+// app.listen(process.env.PORT, '0.0.0.0', () => {
+//     console.log(`Listening on port ${process.env.PORT}.`);
+// })

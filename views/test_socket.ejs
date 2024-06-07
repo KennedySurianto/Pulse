@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Chat App</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: #f0f0f0;
+        }
+
+        #messages {
+            list-style-type: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        #messages li {
+            padding: 8px;
+            margin-bottom: 4px;
+            background: #fff;
+            border-radius: 4px;
+        }
+
+        #form {
+            display: flex;
+            padding: 20px;
+            background: #fff;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            box-shadow: 0 -1px 2px rgba(0, 0, 0, 0.1);
+        }
+
+        #input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            margin-right: 10px;
+        }
+
+        #send {
+            background: #007bff;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+    <ul id="messages"></ul>
+    <form id="form" action="">
+        <input id="input" autocomplete="off" placeholder="Type your message here..." />
+        <button id="send">Send</button>
+    </form>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', (event) => {
+                const socket = io();
+
+                // Handle form submission
+                document.getElementById('form').addEventListener('submit', function (e) {
+                    e.preventDefault();
+                    const input = document.getElementById('input');
+                    if (input.value) {
+                        socket.emit('chat message', input.value);
+                        input.value = '';
+                    }
+                });
+
+                // Listen for chat messages
+                socket.on('chat message', function (msg) {
+                    const item = document.createElement('li');
+                    item.textContent = msg;
+                    document.getElementById('messages').appendChild(item);
+                    window.scrollTo(0, document.body.scrollHeight);
+                });
+            });
+
+
+    </script>
+</body>
+
+</html>

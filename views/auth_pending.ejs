@@ -17,7 +17,10 @@
                             </div>
                         </div>
                         <div class="d-flex">
-                            <a href="/chat/<%= p.user_id %>" class="btn btn-primary rounded-pill me-2">Chat</a>
+                            <form action="/chat" method="post">
+                                <input type="hidden" name="friend_id" value="<%= p.user_id %>">
+                                <button type="submit" class="btn btn-primary rounded-pill me-2">Chat</button>
+                            </form>
                             <form action="/add-friend" method="post">
                                 <input type="hidden" name="user_id" value="<%= p.user_id %>">
                                 <input type="hidden" name="wasPending" value="true">
