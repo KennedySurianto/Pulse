@@ -309,18 +309,18 @@ app.post("/create-group", upload.single('picture'), ensureAuthenticated, async (
     }
 })
 
-app.post("/search-user", ensureAuthenticated, async (req, res) => {
-    const username = req.body.username;
+// app.post("/search-user", ensureAuthenticated, async (req, res) => {
+//     const username = req.body.username;
 
-    try {
-        const users = await req.db.query("SELECT u.user_id, username, profile_image_url FROM users u WHERE u.user_id <> $1 AND u.user_id NOT IN (SELECT friend_id FROM friends WHERE user_id = $1) AND username ILIKE '%' || $2 || '%';", [req.user.user_id, username]);
+//     try {
+//         const users = await req.db.query("SELECT u.user_id, username, profile_image_url FROM users u WHERE u.user_id <> $1 AND u.user_id NOT IN (SELECT friend_id FROM friends WHERE user_id = $1) AND username ILIKE '%' || $2 || '%';", [req.user.user_id, username]);
 
-        res.render("auth_userlist.ejs", { users: users.rows, userActive: true });
-    } catch (error) {
-        console.error(error);
-        res.redirect("/");
-    }
-})
+//         res.render("auth_userlist.ejs", { users: users.rows, userActive: true });
+//     } catch (error) {
+//         console.error(error);
+//         res.redirect("/");
+//     }
+// })
 
 app.post('/upload-profile-picture', upload.single('picture'), ensureAuthenticated, async (req, res) => {
     // Access uploaded file details via req.file
