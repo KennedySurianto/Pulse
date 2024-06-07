@@ -105,6 +105,64 @@ var globalMessage = {
     }
 };
 
+// TEST
+// app.get('/test', (req, res) => {
+//     res.render('test_socket');
+// });
+
+// socket.io
+io.on('connection', (socket) => {
+    console.log('a user connected');
+
+    // Join a chat room
+    socket.on('join chat', (chat_id) => {
+        socket.join(chat_id);
+    });
+
+    // Handle events (e.g., chat messages)
+    socket.on('chat message', async (msg) => {
+        // Extract message data from payload
+        const { chat_id, content, sender_id } = msg;
+        console.log('msg:', msg);
+
+        try {
+            const db = await pool.connect();
+
+            // Insert message into the database
+            const insertedMessage = await db.query("INSERT INTO messages (chat_id, content, sender_id) VALUES ($1, $2, $3) RETURNING *", [chat_id, content, sender_id]);
+
+            // Check if any rows were inserted
+            if (insertedMessage.rows.length > 0) {
+                const messageId = insertedMessage.rows[0].message_id;
+
+                // Retrieve the inserted message along with additional user information
+                const message = await db.query("SELECT DISTINCT m.*, u.user_id, username, profile_image_url FROM messages m JOIN users u ON u.user_id = m.sender_id WHERE message_id = $1", [messageId]);
+
+                // Check if the message was retrieved
+                if (message.rows.length > 0) {
+                    const messageToEmit = message.rows[0];
+                    console.log('msgtoemit:', messageToEmit);
+
+                    // Broadcast the message to all clients
+                    io.emit('chat message', messageToEmit);
+                } else {
+                    console.error("Failed to retrieve the inserted message");
+                }
+            } else {
+                console.error("No rows were inserted");
+            }
+            db.release();
+        } catch (error) {
+            console.error(error);
+        }
+    });
+
+    // Handle disconnection
+    socket.on('disconnect', () => {
+        console.log('user disconnected');
+    });
+});
+
 // HOME
 app.get("/", (req, res) => {
     if (req.isAuthenticated()) {
@@ -263,7 +321,7 @@ app.get("/group-chat", ensureAuthenticated, async (req, res) => {
             const group = await req.db.query(getGroupQuery, [group_id]);
             // console.log("messages.rows: ", messages.rows);
             // console.log("group.rows[0]: ", group.rows[0]);
-            res.render("auth_groupchat.ejs", { messages: messages.rows, group: group.rows[0] });
+            res.render("auth_groupchat.ejs", { messages: messages.rows, group: group.rows[0], user: req.user });
         } else {
             res.redirect("/groups");
         }
@@ -312,65 +370,7 @@ app.post("/create-group", upload.single('picture'), ensureAuthenticated, async (
     }
 })
 
-// TEST
 
-app.get('/test', (req, res) => {
-    res.render('test_socket');
-});
-
-io.on('connection', (socket) => {
-    console.log('a user connected');
-
-    // Join a chat room
-    socket.on('join chat', (chat_id) => {
-        socket.join(chat_id);
-    });
-
-    // Handle events (e.g., chat messages)
-    socket.on('chat message', async (msg) => {
-        // Extract message data from payload
-        const { chat_id, content, sender_id} = msg;
-        console.log('msg:', msg);
-
-        try {
-            const db = await pool.connect();
-
-            // Insert message into the database
-            const insertedMessage = await db.query("INSERT INTO messages (chat_id, content, sender_id) VALUES ($1, $2, $3) RETURNING *", [chat_id, content, sender_id]);
-
-            // Check if any rows were inserted
-            if (insertedMessage.rows.length > 0) {
-                const messageId = insertedMessage.rows[0].message_id;
-
-                // Retrieve the inserted message along with additional user information
-                const message = await db.query("SELECT DISTINCT m.*, u.user_id, username, profile_image_url FROM messages m JOIN users u ON u.user_id = m.sender_id WHERE message_id = $1", [messageId]);
-
-                // Check if the message was retrieved
-                if (message.rows.length > 0) {
-                    const messageToEmit = message.rows[0];
-                    console.log('msgtoemit:', messageToEmit);
-
-                    // Broadcast the message to all clients
-                    io.emit('chat message', messageToEmit);
-                } else {
-                    console.error("Failed to retrieve the inserted message");
-                }
-            } else {
-                console.error("No rows were inserted");
-            }
-
-            db.release();
-        } catch (error) {
-            console.error(error);
-        }
-    });
-
-
-    // Handle disconnection
-    socket.on('disconnect', () => {
-        console.log('user disconnected');
-    });
-});
 
 // app.post("/search-user", ensureAuthenticated, async (req, res) => {
 //     const username = req.body.username;
@@ -450,21 +450,21 @@ app.post("/message-group", ensureAuthenticated, async (req, res) => {
     }
 })
 
-app.post("/message-post", ensureAuthenticated, async (req, res) => {
-    const sender_id = parseInt(req.user.user_id);
-    const content = req.body.content;
-    const chat_id = parseInt(req.body.chat_id);
+// app.post("/message-post", ensureAuthenticated, async (req, res) => {
+//     const sender_id = parseInt(req.user.user_id);
+//     const content = req.body.content;
+//     const chat_id = parseInt(req.body.chat_id);
 
-    try {
-        const result = await req.db.query('INSERT INTO messages (sender_id, content, chat_id) VALUES ($1, $2, $3) RETURNING *', [sender_id, content, chat_id]);
-        const message = result.rows[0];
-        io.to(chat_id).emit('chat message', message); // Emit message to specific chat room
-        res.redirect(`/chat`);
-    } catch (error) {
-        console.log(error);
-        res.redirect("/");
-    }
-})
+//     try {
+//         const result = await req.db.query('INSERT INTO messages (sender_id, content, chat_id) VALUES ($1, $2, $3) RETURNING *', [sender_id, content, chat_id]);
+//         const message = result.rows[0];
+//         io.to(chat_id).emit('chat message', message); // Emit message to specific chat room
+//         res.redirect(`/chat`);
+//     } catch (error) {
+//         console.log(error);
+//         res.redirect("/");
+//     }
+// })
 
 app.post("/change-password", ensureAuthenticated, async (req, res) => {
     const { currentPassword, newPassword, confirmPassword } = req.body;

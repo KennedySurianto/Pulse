@@ -63,16 +63,16 @@
                                     </div>
                                 </div>
                             </div>
-                            <% }) %>
+                        <% }) %>
                     <% } %>
                 </div>
 
                 <!-- Chat Input -->
                 <div class="col-12">
-                    <form id="chat-form" action="/message-post" method="post">
+                    <form id="chat-form">
                         <div class="input-group">
                             <input type="hidden" id="chat-id" value="<%= chat_id %>">
-                            <input type="text" id="message-input" class="form-control" placeholder="Message"
+                            <input type="text" id="message-input" class="form-control" placeholder="Message <%= friend.username %>"
                                 autocomplete="off" required>
                             <button class="btn btn-primary rounded-0" type="submit">Send</button>
                         </div>

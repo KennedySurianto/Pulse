@@ -64,28 +64,26 @@
     <script src="/socket.io/socket.io.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', (event) => {
-                const socket = io();
+            const socket = io();
 
-                // Handle form submission
-                document.getElementById('form').addEventListener('submit', function (e) {
-                    e.preventDefault();
-                    const input = document.getElementById('input');
-                    if (input.value) {
-                        socket.emit('chat message', input.value);
-                        input.value = '';
-                    }
-                });
-
-                // Listen for chat messages
-                socket.on('chat message', function (msg) {
-                    const item = document.createElement('li');
-                    item.textContent = msg;
-                    document.getElementById('messages').appendChild(item);
-                    window.scrollTo(0, document.body.scrollHeight);
-                });
+            // Handle form submission
+            document.getElementById('form').addEventListener('submit', function (e) {
+                e.preventDefault();
+                const input = document.getElementById('input');
+                if (input.value) {
+                    socket.emit('chat message', input.value);
+                    input.value = '';
+                }
             });
 
-
+            // Listen for chat messages
+            socket.on('chat message', function (msg) {
+                const item = document.createElement('li');
+                item.textContent = msg;
+                document.getElementById('messages').appendChild(item);
+                window.scrollTo(0, document.body.scrollHeight);
+            });
+        });
     </script>
 </body>
 
