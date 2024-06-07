@@ -436,19 +436,19 @@ app.post("/add-friend", ensureAuthenticated, async (req, res) => {
     }
 })
 
-app.post("/message-group", ensureAuthenticated, async (req, res) => {
-    const sender_id = parseInt(req.user.user_id);
-    const content = req.body.content;
-    const chat_id = parseInt(req.body.chat_id);
+// app.post("/message-group", ensureAuthenticated, async (req, res) => {
+//     const sender_id = parseInt(req.user.user_id);
+//     const content = req.body.content;
+//     const chat_id = parseInt(req.body.chat_id);
 
-    try {
-        await req.db.query("INSERT INTO messages (sender_id, content, chat_id) VALUES ($1, $2, $3)", [sender_id, content, chat_id]);
-        res.redirect(`/group-chat`);
-    } catch (error) {
-        console.error(error);
-        res.redirect("/");
-    }
-})
+//     try {
+//         await req.db.query("INSERT INTO messages (sender_id, content, chat_id) VALUES ($1, $2, $3)", [sender_id, content, chat_id]);
+//         res.redirect(`/group-chat`);
+//     } catch (error) {
+//         console.error(error);
+//         res.redirect("/");
+//     }
+// })
 
 // app.post("/message-post", ensureAuthenticated, async (req, res) => {
 //     const sender_id = parseInt(req.user.user_id);
