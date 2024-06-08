@@ -51,22 +51,27 @@
                         <div class="mb-3">
                             <p class="form-label fw-semibold">Add Group Members</p>
                             <% if (locals.friends && friends.length> 0) { %>
-                                <div class="btn-group-vertical col-12" role="group"
-                                    aria-label="Basic checkbox toggle button group">
-                                    <% friends.forEach((f)=> { %>
-                                        <input type="checkbox" class="btn-check" name="member_<%= f.user_id %>"
-                                            id="member_<%= f.user_id %>" autocomplete="off">
-                                        <label class="btn btn-outline-primary rounded-0" for="member_<%= f.user_id %>">
-                                            <div class="d-flex align-items-center fw-semibold fs-3">
-                                                <img src="<%= f.profile_image_url %>" class="me-2 rounded-circle"
-                                                    alt="Friend Avatar" style="width: 24px; height: 24px;">
-                                                <span style="font-size: 16px;">
-                                                    <%= f.username %>
-                                                </span>
-                                            </div>
-                                        </label>
-                                    <% }) %>
-                                </div>
+                                <form action="/add-members" method="post">
+                                    <div class="btn-group-vertical col-12" role="group" aria-label="Basic checkbox toggle button group">
+                                        <input type="hidden" name="chat_id" value="<%= group.chat_id %>">
+                                        <% friends.forEach((f)=> { %>
+                                            <input type="checkbox" class="btn-check" name="member_<%= f.user_id %>"
+                                                id="member_<%= f.user_id %>" autocomplete="off">
+                                            <label class="btn btn-outline-primary rounded-0" for="member_<%= f.user_id %>">
+                                                <div class="d-flex align-items-center fw-semibold fs-3">
+                                                    <img src="<%= f.profile_image_url %>" class="me-2 rounded-circle"
+                                                        alt="Friend Avatar" style="width: 24px; height: 24px;">
+                                                    <span style="font-size: 16px;">
+                                                        <%= f.username %>
+                                                    </span>
+                                                </div>
+                                            </label>
+                                        <% }) %>
+                                        <div>
+                                            <button id="submitButtonCheck" type="submit" class="btn btn-primary mt-2" style="display: none;">Add new members</button>
+                                        </div>
+                                    </div>
+                                </form>
                             <% } else { %>
                                 <div class="bg-white">
                                     <p class="text-dark p-2">There is no user available.</p>
@@ -160,12 +165,25 @@
     const submitButton = document.getElementById('submitButton');
 
     profileImageInput.addEventListener('change', function (event) {
-            const [file] = event.target.files;
-            if (file) {
-                profileImage.src = URL.createObjectURL(file); // Update the src of the image element
-                submitButton.style.display = 'block';
+        const [file] = event.target.files;
+        if (file) {
+            profileImage.src = URL.createObjectURL(file); // Update the src of the image element
+            submitButton.style.display = 'block';
+        }
+    });
+
+    const checkboxes = document.querySelectorAll('.btn-check');
+    const submitButtonCheck = document.getElementById('submitButtonCheck');
+
+    checkboxes.forEach((c) => {
+        c.addEventListener('change', () => {
+            if (Array.from(checkboxes).some(checkbox => checkbox.checked)) {
+                submitButtonCheck.style.display = 'block';
+            } else {
+                submitButtonCheck.style.display = 'none';
             }
-        });
+        })
+    })
 </script>
 
 <%- include("partials/footer.ejs") %>

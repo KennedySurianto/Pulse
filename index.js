@@ -298,6 +298,7 @@ app.post("/group-settings", ensureAuthenticated, (req, res) => {
 
 app.get("/group-settings", ensureAuthenticated, async (req, res) => {
     const group_id = req.session.group_id;
+    console.log("chat_id: ", group_id);
     const getGroupQuery = `
         SELECT * FROM groups g
             JOIN group_leaders gl ON gl.chat_id = g.chat_id
@@ -313,11 +314,11 @@ app.get("/group-settings", ensureAuthenticated, async (req, res) => {
         WHERE chat_id = $1;
     `;
     const getFriendsExceptMembersQuery = `
-        SELECT u.user_id, username, profile_image_url
+        SELECT f.friend_id, username, profile_image_url
         FROM friends f
             JOIN users u ON u.user_id = f.friend_id
         WHERE f.user_id = $1
-            AND f.user_id NOT IN (
+            AND f.friend_id NOT IN (
                 SELECT user_id FROM participants
                 WHERE chat_id = $2
             );
@@ -327,6 +328,7 @@ app.get("/group-settings", ensureAuthenticated, async (req, res) => {
         if (checkUser.rowCount > 0) {
             const group = await req.db.query(getGroupQuery, [group_id]);
             const friends = await req.db.query(getFriendsExceptMembersQuery, [req.user.user_id, group_id]);
+            console.log("friends except members: ", friends.rows);
             const members = await req.db.query(getGroupMembersQuery, [group_id]);
             // console.log("group.rows[0]: ", group.rows[0]);
             res.render("auth_group_settings.ejs", { group: group.rows[0], user: req.user, friends: friends.rows, members: members.rows });
@@ -432,6 +434,25 @@ app.post("/create-group", upload.single('picture'), ensureAuthenticated, async (
     } catch (error) {
         await req.db.query("ROLLBACK;");
         console.error(error);
+        res.redirect("/");
+    }
+})
+
+app.post('/add-members', ensureAuthenticated, async (req, res) => {
+    const { chat_id, ...members } = req.body;
+    const memberIds = Object.keys(members).map(key => key.replace('member_', ''));
+    const insertIntoParticipantsQuery = `
+        INSERT INTO participants (chat_id, user_id) VALUES ($1, $2);
+    `;
+    try {
+        await req.db.query("BEGIN;");
+        for (const memberId of memberIds) {
+            await req.db.query(insertIntoParticipantsQuery, [chat_id, memberId]);
+        }
+        await req.db.query("COMMIT;");
+        res.redirect("/group-settings");
+    } catch (error) {
+        await req.db.query("ROLLBACK;");
         res.redirect("/");
     }
 })
