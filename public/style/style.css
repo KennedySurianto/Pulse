@@ -17,7 +17,7 @@ main {
 
 .username-text {
     display: inline-block;
-    max-width: 250px;
+    max-width: 350px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -34,7 +34,7 @@ main {
 
 @media (max-width: 576px) {
     .username-text {
-        max-width: 125px;
+        max-width: 150px;
         /* Reduce the max-width for smaller screens */
         font-size: 16px;
         /* Reduce the font size for smaller screens */

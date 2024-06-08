@@ -25,9 +25,13 @@
                         </div>
                         <hr style="color: white">
                         <div class="mb-3">
-                            <label for="groupName" class="form-label fw-semibold">Group Name</label>
-                            <input type="text" name="group_name" class="form-control rounded-0"
-                                value="<%= group.group_name %>" autocomplete="off" required>
+                            <form action="/rename-group" method="post">
+                                <label for="groupName" class="form-label fw-semibold">Group Name</label>
+                                <input id="changeGroupNameInput" type="text" name="group_name" class="form-control rounded-0"
+                                    value="<%= group.group_name %>" autocomplete="off" required>
+                                <input type="hidden" name="chat_id" value="<%= group.chat_id %>">
+                                <button id="changeGroupNameBtn" type="submit" class="btn btn-primary mt-2" style="display: none;">Change Group Name</button>
+                            </form>
                         </div>
                         <div class="mb-3">
                             <p class="form-label fw-semibold">Group Members</p>
@@ -41,7 +45,7 @@
                                                     style="width: 24px; height: 24px;">
                                                 <span style="font-size: 16px;">
                                                     <%= m.username %>
-                                                    <% if (parseInt(m.user_id)===parseInt(group.user_id)) { %>
+                                                    <% if (parseInt(m.user_id) === parseInt(group.user_id)) { %>
                                                         <span class="text-primary fw-semibold"> (Leader)</span>
                                                     <% } %>
                                                 </span>
@@ -198,35 +202,36 @@
     </div>
 
 <script>
-    const profileImage = document.getElementById('profileImage'); // Get the image element
-    const profileImageInput = document.getElementById('profileImageInput');
-    const submitButton = document.getElementById('submitButton');
-
-    profileImageInput.addEventListener('change', function (event) {
-        const [file] = event.target.files;
-        if (file) {
-            profileImage.src = URL.createObjectURL(file); // Update the src of the image element
-            submitButton.style.display = 'block';
-        }
-    });
-
-    const checkboxes = document.querySelectorAll('.btn-check');
-    const submitButtonCheck = document.getElementById('submitButtonCheck');
-
-    checkboxes.forEach((c) => {
-        c.addEventListener('change', () => {
-            if (Array.from(checkboxes).some(checkbox => checkbox.checked)) {
-                submitButtonCheck.style.display = 'block';
-            } else {
-                submitButtonCheck.style.display = 'none';
-            }
-        })
-    })
-
     document.addEventListener('DOMContentLoaded', function () {
-        var kickButtons = document.querySelectorAll('.kick-button');
-        var kickUserIdInput = document.getElementById('kickUserId');
-        var kickUsername = document.getElementById('kickUsername');
+        const kickButtons = document.querySelectorAll('.kick-button');
+        const kickUserIdInput = document.getElementById('kickUserId');
+        const kickUsername = document.getElementById('kickUsername');
+        const profileImage = document.getElementById('profileImage'); // Get the image element
+        const profileImageInput = document.getElementById('profileImageInput');
+        const submitButton = document.getElementById('submitButton');
+        const changeGroupNameBtn = document.getElementById('changeGroupNameBtn');
+        const changeGroupNameInput = document.getElementById('changeGroupNameInput');
+
+        profileImageInput.addEventListener('change', function (event) {
+            const [file] = event.target.files;
+            if (file) {
+                profileImage.src = URL.createObjectURL(file); // Update the src of the image element
+                submitButton.style.display = 'block';
+            }
+        });
+
+        const checkboxes = document.querySelectorAll('.btn-check');
+        const submitButtonCheck = document.getElementById('submitButtonCheck');
+
+        checkboxes.forEach((c) => {
+            c.addEventListener('change', () => {
+                if (Array.from(checkboxes).some(checkbox => checkbox.checked)) {
+                    submitButtonCheck.style.display = 'block';
+                } else {
+                    submitButtonCheck.style.display = 'none';
+                }
+            })
+        })
 
         kickButtons.forEach(function (button) {
             button.addEventListener('click', function () {
@@ -236,6 +241,14 @@
                 kickUsername.innerText = username;
             });
         });
+
+        changeGroupNameInput.addEventListener('input', function (event) {
+            if (changeGroupNameInput.value !== '<%= group.group_name %>') {
+                changeGroupNameBtn.style.display = 'block';
+            } else {
+                changeGroupNameBtn.style.display = 'none';
+            }
+        })
     });
 </script>
 

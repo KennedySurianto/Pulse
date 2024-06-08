@@ -365,6 +365,22 @@ app.post('/kick-member', ensureAuthenticated, async (req, res) => {
     }
 })
 
+app.post('/rename-group', ensureAuthenticated, async (req, res) => {
+    const { chat_id, group_name } = req.body;
+    const updateGroupNameQuery = `
+        UPDATE groups
+        SET group_name = $1
+        WHERE chat_id = $2;
+    `;
+    try {
+        await req.db.query(updateGroupNameQuery, [group_name, chat_id]);
+        res.redirect('/group-settings');
+    } catch (error) {
+        console.error(error);
+        res.redirect('/');
+    }
+})
+
 app.post('/change-group-picture', upload.single('picture'), ensureAuthenticated, async (req, res) => {
     if (!req.file) {
         return res.redirect("/group-settings");
