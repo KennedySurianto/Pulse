@@ -289,7 +289,19 @@ app.get("/groups", ensureAuthenticated, async (req, res) => {
     }
 })
 
-app.post("/group-chat", ensureAuthenticated, async (req, res) => {
+// TODO: ganti group settings dari modal ke page baru
+app.post("/group-settings", ensureAuthenticated, (req, res) => {
+    const group_id = req.body.chat_id;
+    req.session.group_id = group_id;
+    res.redirect("/group-settings");
+})
+
+app.get("/group-settings", ensureAuthenticated, async(req, res) => {
+    const group_id = req.session.group_id;
+    
+})
+
+app.post("/group-chat", ensureAuthenticated, (req, res) => {
     const group_id = req.body.chat_id;
     req.session.group_id = group_id;
     res.redirect("/group-chat");
@@ -307,21 +319,39 @@ app.get("/group-chat", ensureAuthenticated, async (req, res) => {
         ORDER BY m.created_at ASC;
     `;
     const getGroupQuery = `
-        SELECT * FROM groups WHERE chat_id = $1;
+        SELECT * FROM groups g
+            JOIN group_leaders gl ON gl.chat_id = g.chat_id
+        WHERE g.chat_id = $1;
     `;
     const checkParticipantQuery = `
-        SELECT *
-        FROM participants
+        SELECT * FROM participants
         WHERE user_id = $1 AND chat_id = $2;
-    `
+    `;
+    const getGroupMembersQuery = `
+        SELECT * FROM participants p
+            JOIN users u ON u.user_id = p.user_id
+        WHERE chat_id = $1;
+    `;
+    const getFriendsExceptMembersQuery = `
+        SELECT u.user_id, username, profile_image_url
+        FROM friends f
+            JOIN users u ON u.user_id = f.friend_id
+        WHERE f.user_id = $1
+            AND f.user_id NOT IN (
+                SELECT user_id FROM participants
+                WHERE chat_id = $2
+            );
+    `;
     try {
         const checkUser = await req.db.query(checkParticipantQuery, [req.user.user_id, group_id]);
         if (checkUser.rowCount > 0) {
             const messages = await req.db.query(getMessagesQuery, [group_id]);
             const group = await req.db.query(getGroupQuery, [group_id]);
+            const friends = await req.db.query(getFriendsExceptMembersQuery, [req.user.user_id, group_id]);
+            const members = await req.db.query(getGroupMembersQuery, [group_id]);
             // console.log("messages.rows: ", messages.rows);
             // console.log("group.rows[0]: ", group.rows[0]);
-            res.render("auth_groupchat.ejs", { messages: messages.rows, group: group.rows[0], user: req.user });
+            res.render("auth_groupchat.ejs", { messages: messages.rows, group: group.rows[0], user: req.user, friends: friends.rows, members: members.rows });
         } else {
             res.redirect("/groups");
         }
@@ -345,6 +375,9 @@ app.post("/create-group", upload.single('picture'), ensureAuthenticated, async (
     const insertIntoGroupsQuery = `
         INSERT INTO groups (chat_id, group_name, group_image_url) VALUES ($1, $2, $3);
     `;
+    const insertIntoGroupLeadersQuery = `
+        INSERT INTO group_leaders (chat_id, user_id) VALUES ($1, $2);
+    `;
     const insertIntoParticipantsQuery = `
         INSERT INTO participants (chat_id, user_id) VALUES ($1, $2);
     `;
@@ -354,7 +387,8 @@ app.post("/create-group", upload.single('picture'), ensureAuthenticated, async (
         const newChat = await req.db.query(insertIntoChatsQuery);
         const chat_id = newChat.rows[0].chat_id;
 
-        await req.db.query(insertIntoGroupsQuery, [chat_id, groupName, fileUrl])
+        await req.db.query(insertIntoGroupsQuery, [chat_id, groupName, fileUrl]);
+        await req.db.query(insertIntoGroupLeadersQuery, [chat_id, req.user.user_id]);
         await req.db.query(insertIntoParticipantsQuery, [chat_id, req.user.user_id]);
 
         for (const memberId of memberIds) {
