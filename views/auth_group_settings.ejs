@@ -14,7 +14,7 @@
                                 <img id="profileImage" src="<%= group.group_image_url %>" alt="Profile Image"
                                     class="img-fluid rounded-circle mb-2" style="width: 100px; height: 100px;">
                             </div>
-                            <div class="col-3">
+                            <div class="col-md-6 col-xxl-4">
                                 <form action="/change-group-picture" method="post" enctype="multipart/form-data">
                                     <input type="hidden" name="chat_id" value="<%= group.chat_id %>">
                                     <input id="profileImageInput" class="form-control rounded-0 me-2" type="file" id="formFile" accept="image/*"
@@ -41,13 +41,15 @@
                                                     style="width: 24px; height: 24px;">
                                                 <span style="font-size: 16px;">
                                                     <%= m.username %>
-                                                    <% if (parseInt(m.user_id) === parseInt(group.user_id)) { %> (Leader)<% } %>
+                                                    <% if (parseInt(m.user_id)===parseInt(group.user_id)) { %>
+                                                        <span class="text-primary fw-semibold"> (Leader)</span>
+                                                    <% } %>
                                                 </span>
                                             </div>
                                         </div>
                                         <div>
-                                            <% if (parseInt(m.user_id)!==parseInt(group.user_id)) { %>
-                                            <button type="button" class="kick-button btn btn-sm btn-danger rounded-pill" data-user-id="<%= m.user_id %>" data-bs-toggle="modal" data-bs-target="#exampleModal2">
+                                            <% if (parseInt(m.user_id) !== parseInt(group.user_id)) { %>
+                                            <button type="button" class="kick-button btn btn-sm btn-danger rounded-pill" data-user-id="<%= m.user_id %>" data-username="<%= m.username %>" data-bs-toggle="modal" data-bs-target="#exampleModal2">
                                                 Kick
                                             </button>
                                             <% } %>
@@ -64,8 +66,8 @@
                                         <input type="hidden" name="chat_id" value="<%= group.chat_id %>">
                                         <% friends.forEach((f)=> { %>
                                             <input type="checkbox" class="btn-check" name="member_<%= f.friend_id %>"
-                                                id="member_<%= f.user_id %>" autocomplete="off">
-                                            <label class="btn btn-outline-primary rounded-0" for="member_<%= f.user_id %>">
+                                                id="member_<%= f.friend_id %>" autocomplete="off">
+                                            <label class="btn btn-outline-primary rounded-0" for="member_<%= f.friend_id %>">
                                                 <div class="d-flex align-items-center fw-semibold fs-3">
                                                     <img src="<%= f.profile_image_url %>" class="me-2 rounded-circle"
                                                         alt="Friend Avatar" style="width: 24px; height: 24px;">
@@ -126,7 +128,9 @@
                                                 style="width: 24px; height: 24px;">
                                             <span style="font-size: 16px;">
                                                 <%= m.username %>
-                                                <% if (parseInt(m.user_id)===parseInt(group.user_id)) { %> (Leader)<% } %>
+                                                <% if (parseInt(m.user_id)===parseInt(group.user_id)) { %> 
+                                                    <span class="color-primary"> (Leader)</span>
+                                                <% } %>
                                             </span>
                                         </div>
                                     </div>
@@ -153,7 +157,7 @@
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h1 class="modal-title fs-5 fw-bold text-uppercase" id="exampleModalLabel">Delete Group Confirmation</h1>
+                    <h1 class="modal-title fs-5 fw-bold text-uppercase" id="exampleModalLabel">Delete Group</h1>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
@@ -174,14 +178,15 @@
     <div class="modal fade" id="exampleModal2" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
-                <form id="kickForm" action="/kick_member" method="post">
+                <form id="kickForm" action="/kick-member" method="post">
                     <div class="modal-header">
                         <h5 class="modal-title" id="exampleModalLabel2">Kick Member</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                        Are you sure you want to kick this member?
+                        Are you sure you want to kick <span id="kickUsername" class="fw-bold"></span> from this group?
                         <input type="hidden" name="user_id" id="kickUserId">
+                        <input type="hidden" name="chat_id" value="<%= group.chat_id %>">
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -221,11 +226,14 @@
     document.addEventListener('DOMContentLoaded', function () {
         var kickButtons = document.querySelectorAll('.kick-button');
         var kickUserIdInput = document.getElementById('kickUserId');
+        var kickUsername = document.getElementById('kickUsername');
 
         kickButtons.forEach(function (button) {
             button.addEventListener('click', function () {
                 var userId = this.getAttribute('data-user-id');
+                var username = this.getAttribute('data-username');
                 kickUserIdInput.value = userId;
+                kickUsername.innerText = username;
             });
         });
     });

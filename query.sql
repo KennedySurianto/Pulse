@@ -30,8 +30,8 @@ CREATE TABLE groups (
 
 -- TO INSERT: chat_id, user_id
 CREATE TABLE group_leaders (
-	chat_id INT NOT NULL UNIQUE REFERENCES chats(chat_id) ON DELETE CASCADE,
-	user_id INT NOT NULL UNIQUE REFERENCES users(user_id) ON DELETE CASCADE,
+	chat_id INT NOT NULL REFERENCES chats(chat_id) ON DELETE CASCADE,
+	user_id INT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
 	PRIMARY KEY (chat_id, user_id)
 );
 

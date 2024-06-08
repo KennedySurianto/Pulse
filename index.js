@@ -297,7 +297,7 @@ app.post("/group-settings", ensureAuthenticated, (req, res) => {
 
 app.get("/group-settings", ensureAuthenticated, async (req, res) => {
     const group_id = req.session.group_id;
-    console.log("chat_id: ", group_id);
+    // console.log("chat_id: ", group_id);
     const getGroupQuery = `
         SELECT * FROM groups g
             JOIN group_leaders gl ON gl.chat_id = g.chat_id
@@ -348,6 +348,20 @@ app.post("/delete-group", ensureAuthenticated, async (req, res) => {
     } catch (error) {
         console.error(error);
         res.redirect("/");
+    }
+})
+
+app.post('/kick-member', ensureAuthenticated, async (req, res) => {
+    const { user_id, chat_id } = req.body;
+    const deleteMemberQuery = `
+        DELETE FROM participants WHERE user_id = $1 AND chat_id = $2;
+    `;
+    try {
+        await req.db.query(deleteMemberQuery, [user_id, chat_id]);
+        res.redirect('/group-settings');
+    } catch (error) {
+        console.error(error);
+        res.redirect('/');
     }
 })
 
