@@ -41,6 +41,7 @@
                                                     style="width: 24px; height: 24px;">
                                                 <span style="font-size: 16px;">
                                                     <%= m.username %>
+                                                    <% if (parseInt(m.user_id) === parseInt(group.user_id)) { %> (Leader)<% } %>
                                                 </span>
                                             </div>
                                         </div>
@@ -49,13 +50,13 @@
                             </ul>
                         </div>
                         <div class="mb-3">
-                            <p class="form-label fw-semibold">Add Group Members</p>
+                            <p class="form-label fw-semibold">Add Group Members From Friend List</p>
                             <% if (locals.friends && friends.length> 0) { %>
                                 <form action="/add-members" method="post">
                                     <div class="btn-group-vertical col-12" role="group" aria-label="Basic checkbox toggle button group">
                                         <input type="hidden" name="chat_id" value="<%= group.chat_id %>">
                                         <% friends.forEach((f)=> { %>
-                                            <input type="checkbox" class="btn-check" name="member_<%= f.user_id %>"
+                                            <input type="checkbox" class="btn-check" name="member_<%= f.friend_id %>"
                                                 id="member_<%= f.user_id %>" autocomplete="off">
                                             <label class="btn btn-outline-primary rounded-0" for="member_<%= f.user_id %>">
                                                 <div class="d-flex align-items-center fw-semibold fs-3">
@@ -125,6 +126,7 @@
                             <% }) %>
                         </ul>
                     </div>
+                    <hr class="color: white;">
                     <div>
                         <form action="/group-chat" method="post">
                             <input type="hidden" name="chat_id" value="<%= group.chat_id %>">
@@ -142,11 +144,11 @@
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h1 class="modal-title fs-5" id="exampleModalLabel">Delete Group Confirmation</h1>
+                    <h1 class="modal-title fs-5 fw-bold text-uppercase" id="exampleModalLabel">Delete Group Confirmation</h1>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <p>Are you sure you want to delete <b><%= group.group_name %></b>?</p>
+                    <p class="fw-semibold">Are you sure you want to delete <span class="fw-bold"><%= group.group_name %></span>?</p>
                 </div>
                 <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>

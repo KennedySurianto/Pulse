@@ -104,15 +104,11 @@
                 const isScrolled = window.scrollY > 0; // Check if scrolled down
 
                 if (isScrolled) {
-                    navbar.classList.add('bg-light');
-                    for (let i = 0; i < navbara.length; i++) {
-                        navbara[i].classList.add('text-dark');
-                    }
+                    navbar.classList.add('blurred-background');
+                    navbar.classList.add('rounded-5');
                 } else {
-                    navbar.classList.remove('bg-light');
-                    for (let i = 0; i < navbara.length; i++) {
-                        navbara[i].classList.remove('text-dark');
-                    }
+                    navbar.classList.remove('blurred-background');
+                    navbar.classList.add('rounded-5');
                 }
             });
         </script>

@@ -289,7 +289,6 @@ app.get("/groups", ensureAuthenticated, async (req, res) => {
     }
 })
 
-// TODO: ganti group settings dari modal ke page baru
 app.post("/group-settings", ensureAuthenticated, (req, res) => {
     const group_id = req.body.chat_id;
     req.session.group_id = group_id;
@@ -330,7 +329,7 @@ app.get("/group-settings", ensureAuthenticated, async (req, res) => {
             const friends = await req.db.query(getFriendsExceptMembersQuery, [req.user.user_id, group_id]);
             console.log("friends except members: ", friends.rows);
             const members = await req.db.query(getGroupMembersQuery, [group_id]);
-            // console.log("group.rows[0]: ", group.rows[0]);
+            console.log("group.rows[0]: ", group.rows[0]);
             res.render("auth_group_settings.ejs", { group: group.rows[0], user: req.user, friends: friends.rows, members: members.rows });
         } else {
             res.redirect("/groups");
@@ -440,6 +439,8 @@ app.post("/create-group", upload.single('picture'), ensureAuthenticated, async (
 
 app.post('/add-members', ensureAuthenticated, async (req, res) => {
     const { chat_id, ...members } = req.body;
+    // console.log("chat_id: ", chat_id);
+    // console.log("members: ", members);
     const memberIds = Object.keys(members).map(key => key.replace('member_', ''));
     const insertIntoParticipantsQuery = `
         INSERT INTO participants (chat_id, user_id) VALUES ($1, $2);
@@ -568,24 +569,25 @@ app.post("/register-post", async (req, res) => {
         } else {
             if (password !== password_confirmation) {
                 globalMessage.setMessage("danger", "Password doesn't match", "Make sure the password confirmation matches the password");
-                res.redirect("/register");
-            }
-            bcrypt.hash(password, saltRounds, async (err, hash) => {
-                if (err) {
-                    console.log(err);
-                    res.redirect("/");
-                } else {
-                    const fileUrl = `${req.protocol}://${req.get('host')}/images/default2201.png`;
-                    const result = await req.db.query("INSERT INTO users (username, password_hash, profile_image_url) VALUES ($1, $2, $3) RETURNING *", [username, hash, fileUrl]);
-                    const user = result.rows[0];
-
-                    req.login(user, (err) => {
+                return res.redirect("/register");
+            } else {
+                bcrypt.hash(password, saltRounds, async (err, hash) => {
+                    if (err) {
                         console.log(err);
-                        globalMessage.setMessage("success", "Account created successfully", "You can start chatting now");
-                        res.redirect("/home");
-                    })
-                }
-            })
+                        res.redirect("/");
+                    } else {
+                        const fileUrl = `${req.protocol}://${req.get('host')}/images/default2201.png`;
+                        const result = await req.db.query("INSERT INTO users (username, password_hash, profile_image_url) VALUES ($1, $2, $3) RETURNING *", [username, hash, fileUrl]);
+                        const user = result.rows[0];
+
+                        req.login(user, (err) => {
+                            console.log(err);
+                            globalMessage.setMessage("success", "Account created successfully", "You can start chatting now");
+                            res.redirect("/home");
+                        })
+                    }
+                })
+            }
         }
     } catch (error) {
         console.log(error);
