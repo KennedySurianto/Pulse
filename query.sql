@@ -23,9 +23,9 @@ CREATE TABLE chats (
 
 -- TO INSERT: chat_id, group_name, group_image_url
 CREATE TABLE groups (
-	chat_id INT NOT NULL UNIQUE REFERENCES chats(chat_id) ON DELETE CASCADE,
-	group_name VARCHAR(20) NOT NULL,
-	group_image_url VARCHAR(255) NOT NULL DEFAULT 'https://picsum.photos/200'
+    chat_id INT PRIMARY KEY REFERENCES chats(chat_id) ON DELETE CASCADE,
+    group_name VARCHAR(20) NOT NULL,
+    group_image_url VARCHAR(255) NOT NULL DEFAULT 'https://picsum.photos/200'
 );
 
 -- TO INSERT: chat_id, user_id
