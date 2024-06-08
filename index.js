@@ -296,9 +296,58 @@ app.post("/group-settings", ensureAuthenticated, (req, res) => {
     res.redirect("/group-settings");
 })
 
-app.get("/group-settings", ensureAuthenticated, async(req, res) => {
+app.get("/group-settings", ensureAuthenticated, async (req, res) => {
     const group_id = req.session.group_id;
-    
+    const getGroupQuery = `
+        SELECT * FROM groups g
+            JOIN group_leaders gl ON gl.chat_id = g.chat_id
+        WHERE g.chat_id = $1;
+    `;
+    const checkParticipantQuery = `
+        SELECT * FROM participants
+        WHERE user_id = $1 AND chat_id = $2;
+    `;
+    const getGroupMembersQuery = `
+        SELECT * FROM participants p
+            JOIN users u ON u.user_id = p.user_id
+        WHERE chat_id = $1;
+    `;
+    const getFriendsExceptMembersQuery = `
+        SELECT u.user_id, username, profile_image_url
+        FROM friends f
+            JOIN users u ON u.user_id = f.friend_id
+        WHERE f.user_id = $1
+            AND f.user_id NOT IN (
+                SELECT user_id FROM participants
+                WHERE chat_id = $2
+            );
+    `;
+    try {
+        const checkUser = await req.db.query(checkParticipantQuery, [req.user.user_id, group_id]);
+        if (checkUser.rowCount > 0) {
+            const group = await req.db.query(getGroupQuery, [group_id]);
+            const friends = await req.db.query(getFriendsExceptMembersQuery, [req.user.user_id, group_id]);
+            const members = await req.db.query(getGroupMembersQuery, [group_id]);
+            // console.log("group.rows[0]: ", group.rows[0]);
+            res.render("auth_group_settings.ejs", { group: group.rows[0], user: req.user, friends: friends.rows, members: members.rows });
+        } else {
+            res.redirect("/groups");
+        }
+    } catch (error) {
+        console.error(error);
+        res.redirect("/");
+    }
+})
+
+app.post("/delete-group", ensureAuthenticated, async (req, res) => {
+    const chat_id = req.body.chat_id;
+    try {
+        await req.db.query("DELETE FROM chats WHERE chat_id = $1", [chat_id]);
+        res.redirect("/groups");
+    } catch (error) {
+        console.error(error);
+        res.redirect("/");
+    }
 })
 
 app.post("/group-chat", ensureAuthenticated, (req, res) => {
@@ -327,31 +376,14 @@ app.get("/group-chat", ensureAuthenticated, async (req, res) => {
         SELECT * FROM participants
         WHERE user_id = $1 AND chat_id = $2;
     `;
-    const getGroupMembersQuery = `
-        SELECT * FROM participants p
-            JOIN users u ON u.user_id = p.user_id
-        WHERE chat_id = $1;
-    `;
-    const getFriendsExceptMembersQuery = `
-        SELECT u.user_id, username, profile_image_url
-        FROM friends f
-            JOIN users u ON u.user_id = f.friend_id
-        WHERE f.user_id = $1
-            AND f.user_id NOT IN (
-                SELECT user_id FROM participants
-                WHERE chat_id = $2
-            );
-    `;
     try {
         const checkUser = await req.db.query(checkParticipantQuery, [req.user.user_id, group_id]);
         if (checkUser.rowCount > 0) {
             const messages = await req.db.query(getMessagesQuery, [group_id]);
             const group = await req.db.query(getGroupQuery, [group_id]);
-            const friends = await req.db.query(getFriendsExceptMembersQuery, [req.user.user_id, group_id]);
-            const members = await req.db.query(getGroupMembersQuery, [group_id]);
             // console.log("messages.rows: ", messages.rows);
             // console.log("group.rows[0]: ", group.rows[0]);
-            res.render("auth_groupchat.ejs", { messages: messages.rows, group: group.rows[0], user: req.user, friends: friends.rows, members: members.rows });
+            res.render("auth_groupchat.ejs", { messages: messages.rows, group: group.rows[0], user: req.user });
         } else {
             res.redirect("/groups");
         }
@@ -404,21 +436,6 @@ app.post("/create-group", upload.single('picture'), ensureAuthenticated, async (
     }
 })
 
-
-
-// app.post("/search-user", ensureAuthenticated, async (req, res) => {
-//     const username = req.body.username;
-
-//     try {
-//         const users = await req.db.query("SELECT u.user_id, username, profile_image_url FROM users u WHERE u.user_id <> $1 AND u.user_id NOT IN (SELECT friend_id FROM friends WHERE user_id = $1) AND username ILIKE '%' || $2 || '%';", [req.user.user_id, username]);
-
-//         res.render("auth_userlist.ejs", { users: users.rows, userActive: true });
-//     } catch (error) {
-//         console.error(error);
-//         res.redirect("/");
-//     }
-// })
-
 app.post('/upload-profile-picture', upload.single('picture'), ensureAuthenticated, async (req, res) => {
     // Access uploaded file details via req.file
     if (!req.file) {
@@ -469,36 +486,6 @@ app.post("/add-friend", ensureAuthenticated, async (req, res) => {
         res.redirect("/");
     }
 })
-
-// app.post("/message-group", ensureAuthenticated, async (req, res) => {
-//     const sender_id = parseInt(req.user.user_id);
-//     const content = req.body.content;
-//     const chat_id = parseInt(req.body.chat_id);
-
-//     try {
-//         await req.db.query("INSERT INTO messages (sender_id, content, chat_id) VALUES ($1, $2, $3)", [sender_id, content, chat_id]);
-//         res.redirect(`/group-chat`);
-//     } catch (error) {
-//         console.error(error);
-//         res.redirect("/");
-//     }
-// })
-
-// app.post("/message-post", ensureAuthenticated, async (req, res) => {
-//     const sender_id = parseInt(req.user.user_id);
-//     const content = req.body.content;
-//     const chat_id = parseInt(req.body.chat_id);
-
-//     try {
-//         const result = await req.db.query('INSERT INTO messages (sender_id, content, chat_id) VALUES ($1, $2, $3) RETURNING *', [sender_id, content, chat_id]);
-//         const message = result.rows[0];
-//         io.to(chat_id).emit('chat message', message); // Emit message to specific chat room
-//         res.redirect(`/chat`);
-//     } catch (error) {
-//         console.log(error);
-//         res.redirect("/");
-//     }
-// })
 
 app.post("/change-password", ensureAuthenticated, async (req, res) => {
     const { currentPassword, newPassword, confirmPassword } = req.body;

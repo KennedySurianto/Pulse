@@ -89,142 +89,16 @@
                 </div>
             </div>
             <div class="d-flex justify-content-center">
-                <button data-bs-toggle="modal" data-bs-target="#exampleModal" class="btn btn-outline-light">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor"
-                        class="bi bi-gear-fill" viewBox="0 0 16 16">
-                        <path
-                            d="M9.405 1.05c-.413-1.4-2.397-1.4-2.81 0l-.1.34a1.464 1.464 0 0 1-2.105.872l-.31-.17c-1.283-.698-2.686.705-1.987 1.987l.169.311c.446.82.023 1.841-.872 2.105l-.34.1c-1.4.413-1.4 2.397 0 2.81l.34.1a1.464 1.464 0 0 1 .872 2.105l-.17.31c-.698 1.283.705 2.686 1.987 1.987l.311-.169a1.464 1.464 0 0 1 2.105.872l.1.34c.413 1.4 2.397 1.4 2.81 0l.1-.34a1.464 1.464 0 0 1 2.105-.872l.31.17c1.283.698 2.686-.705 1.987-1.987l-.169-.311a1.464 1.464 0 0 1 .872-2.105l.34-.1c1.4-.413 1.4-2.397 0-2.81l-.34-.1a1.464 1.464 0 0 1-.872-2.105l.17-.31c.698-1.283-.705-2.686-1.987-1.987l-.311.169a1.464 1.464 0 0 1-2.105-.872zM8 10.93a2.929 2.929 0 1 1 0-5.86 2.929 2.929 0 0 1 0 5.858z" />
-                    </svg>
-                    Group Settings
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- MODAL -->
-    <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
-            <div class="modal-content rounded-0">
-                <form action="/update-group" method="post" enctype="multipart/form-data">
-                    <div class="modal-header">
-                        <h1 class="modal-title fs-5 fw-bold text-uppercase" id="exampleModalLabel">Group Settings</h1>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <% if (parseInt(user.user_id)===parseInt(group.user_id)) { %>
-                        <form action="/update-group" method="post" enctype="multipart/form-data">
-                            <div class="modal-body" style="max-height: calc(100vh - 200px); overflow-y: auto;">
-                                <div class="mb-3">
-                                    <label for="formFile" class="form-label fw-semibold">Group Picture</label>
-                                    <div>
-                                        <img id="profileImage" src="<%= group.group_image_url %>" alt="Profile Image"
-                                            class="img-fluid rounded-circle mb-2" style="width: 100px; height: 100px;">
-                                        <input class="form-control" type="file" id="formFile" accept="image/*"
-                                            name="picture">
-                                    </div>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="groupName" class="form-label fw-semibold">Group Name</label>
-                                    <input type="text" name="group_name" class="form-control rounded-0"
-                                        value="<%= group.group_name %>" autocomplete="off" required>
-                                </div>
-                                <div class="mb-3">
-
-                                    <p class="form-label fw-semibold">Group Members</p>
-                                    <ul class="list-group rounded-0">
-                                        <% members.forEach((m)=> { %>
-                                            <li class="list-group-item d-flex justify-content-between align-items-center">
-                                                <div class="media">
-                                                    <div class="d-flex align-items-center fs-5">
-                                                        <img src="<%= m.profile_image_url %>"
-                                                            class="me-2 rounded-circle profile-picture" alt="Friend Avatar"
-                                                            style="width: 24px; height: 24px;">
-                                                        <span style="font-size: 16px;">
-                                                            <%= m.username %>
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                            </li>
-                                        <% }) %>
-                                    </ul>
-                                </div>
-                                <div class="mb-3">
-                                    <div class="btn-group-vertical col-12" role="group"
-                                        aria-label="Basic checkbox toggle button group">
-                                        <p class="form-label fw-semibold">Add Group Members</p>
-                                        <% friends.forEach((f)=> { %>
-                                            <input type="checkbox" class="btn-check" name="member_<%= f.user_id %>"
-                                                id="member_<%= f.user_id %>" autocomplete="off">
-                                            <label class="btn btn-outline-primary rounded-0"
-                                                for="member_<%= f.user_id %>">
-                                                <div class="d-flex align-items-center fw-semibold fs-3">
-                                                    <img src="<%= f.profile_image_url %>" class="me-2 rounded-circle"
-                                                        alt="Friend Avatar" style="width: 24px; height: 24px;">
-                                                    <span style="font-size: 16px;">
-                                                        <%= f.username %>
-                                                    </span>
-                                                </div>
-                                            </label>
-                                        <% }) %>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="modal-footer justify-content-between">
-                                <form action="/delete-group" method="post" class="justify-self-start">
-                                    <input type="hidden" name="chat_id" value="<%= group.chat_id %>">
-                                    <button type="submit" class="btn btn-danger">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
-                                            fill="currentColor" class="bi bi-trash3-fill me-1" viewBox="0 0 16 16">
-                                            <path
-                                                d="M11 1.5v1h3.5a.5.5 0 0 1 0 1h-.538l-.853 10.66A2 2 0 0 1 11.115 16h-6.23a2 2 0 0 1-1.994-1.84L2.038 3.5H1.5a.5.5 0 0 1 0-1H5v-1A1.5 1.5 0 0 1 6.5 0h3A1.5 1.5 0 0 1 11 1.5m-5 0v1h4v-1a.5.5 0 0 0-.5-.5h-3a.5.5 0 0 0-.5.5M4.5 5.029l.5 8.5a.5.5 0 1 0 .998-.06l-.5-8.5a.5.5 0 1 0-.998.06m6.53-.528a.5.5 0 0 0-.528.47l-.5 8.5a.5.5 0 0 0 .998.058l.5-8.5a.5.5 0 0 0-.47-.528M8 4.5a.5.5 0 0 0-.5.5v8.5a.5.5 0 0 0 1 0V5a.5.5 0 0 0-.5-.5" />
-                                        </svg>
-                                        Delete Group
-                                    </button>
-                                </form>
-                                <div>
-                                    <button type="button" class="btn btn-secondary"
-                                        data-bs-dismiss="modal">Cancel</button>
-                                    <button type="submit" class="btn btn-primary">
-                                        Update
-                                    </button>
-                                </div>
-                            </div>
-
-                        </form>
-                    <% } else { %>
-                        <div class="modal-body">
-                            <img id="profileImage" src="<%= group.group_image_url %>" alt="Profile Image"
-                                class="img-fluid rounded-circle" style="width: 100px; height: 100px;">
-                            <fieldset disabled="disabled">
-                                <div class="mb-3">
-                                    <label for="groupName" class="form-label fw-semibold">Group Name</label>
-                                    <input type="text" name="group_name" class="form-control rounded-0 disabled"
-                                        value="<%= group.group_name %>" autocomplete="off" required>
-                                </div>
-                            </fieldset>
-                            <div class="mb-3">
-                                <p class="form-label fw-semibold">Group Members</p>
-                                <ul class="list-group rounded-0">
-                                    <% members.forEach((m)=> { %>
-                                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                                            <div class="media">
-                                                <div class="d-flex align-items-center fs-5">
-                                                    <img src="<%= m.profile_image_url %>"
-                                                        class="me-2 rounded-circle profile-picture" alt="Friend Avatar"
-                                                        style="width: 24px; height: 24px;">
-                                                    <span style="font-size: 16px;">
-                                                        <%= m.username %>
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        </li>
-                                    <% }) %>
-                                </ul>
-                            </div>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Back to chat room</button>
-                        </div>
-                    <% } %>
+                <form action="/group-settings" method="post">
+                    <input type="hidden" name="chat_id" value="<%= group.chat_id %>">
+                    <button type="submit" class="btn btn-outline-light">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor"
+                            class="bi bi-gear-fill" viewBox="0 0 16 16">
+                            <path
+                                d="M9.405 1.05c-.413-1.4-2.397-1.4-2.81 0l-.1.34a1.464 1.464 0 0 1-2.105.872l-.31-.17c-1.283-.698-2.686.705-1.987 1.987l.169.311c.446.82.023 1.841-.872 2.105l-.34.1c-1.4.413-1.4 2.397 0 2.81l.34.1a1.464 1.464 0 0 1 .872 2.105l-.17.31c-.698 1.283.705 2.686 1.987 1.987l.311-.169a1.464 1.464 0 0 1 2.105.872l.1.34c.413 1.4 2.397 1.4 2.81 0l.1-.34a1.464 1.464 0 0 1 2.105-.872l.31.17c1.283.698 2.686-.705 1.987-1.987l-.169-.311a1.464 1.464 0 0 1 .872-2.105l.34-.1c1.4-.413 1.4-2.397 0-2.81l-.34-.1a1.464 1.464 0 0 1-.872-2.105l.17-.31c.698-1.283-.705-2.686-1.987-1.987l-.311.169a1.464 1.464 0 0 1-2.105-.872zM8 10.93a2.929 2.929 0 1 1 0-5.86 2.929 2.929 0 0 1 0 5.858z" />
+                        </svg>
+                        Group Settings
+                    </button>
                 </form>
             </div>
         </div>

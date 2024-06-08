@@ -1,13 +1,171 @@
 <%- include("partials/auth_header.ejs") %>
 
-<div class="container py-4">
-    <div class="border border-light blurred-background p-5 mb-5">
-        <h2 class="text-light fw-bold text-uppercase">
-            Group Settings
-        </h2>
-        <hr style="color: white">
-
+    <div class="container py-4">
+        <div class="border border-light blurred-background p-5 mb-5">
+            <h2 class="text-light fw-bold text-uppercase">
+                Group Settings
+            </h2>
+            <hr style="color: white">
+            <% if (parseInt(user.user_id) === parseInt(group.user_id)) { %>
+                    <div class="text-light">
+                        <div class="mb-3">
+                            <label for="formFile" class="form-label fw-semibold">Group Picture</label>
+                            <div>
+                                <img id="profileImage" src="<%= group.group_image_url %>" alt="Profile Image"
+                                    class="img-fluid rounded-circle mb-2" style="width: 100px; height: 100px;">
+                            </div>
+                            <div class="col-3">
+                                <form action="/change-group-picture" method="post" enctype="multipart/form-data">
+                                    <input type="hidden" name="chat_id" value="<%= group.chat_id %>">
+                                    <input id="profileImageInput" class="form-control rounded-0 me-2" type="file" id="formFile" accept="image/*"
+                                        name="picture">
+                                    <button id="submitButton" type="submit" class="btn btn-primary mt-2" style="display: none;">Change Group Picture</button>
+                                </form>
+                            </div>
+                        </div>
+                        <hr style="color: white">
+                        <div class="mb-3">
+                            <label for="groupName" class="form-label fw-semibold">Group Name</label>
+                            <input type="text" name="group_name" class="form-control rounded-0"
+                                value="<%= group.group_name %>" autocomplete="off" required>
+                        </div>
+                        <div class="mb-3">
+                            <p class="form-label fw-semibold">Group Members</p>
+                            <ul class="list-group rounded-0">
+                                <% members.forEach((m)=> { %>
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        <div class="media">
+                                            <div class="d-flex align-items-center fs-5">
+                                                <img src="<%= m.profile_image_url %>"
+                                                    class="me-2 rounded-circle profile-picture" alt="Friend Avatar"
+                                                    style="width: 24px; height: 24px;">
+                                                <span style="font-size: 16px;">
+                                                    <%= m.username %>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </li>
+                                <% }) %>
+                            </ul>
+                        </div>
+                        <div class="mb-3">
+                            <p class="form-label fw-semibold">Add Group Members</p>
+                            <% if (locals.friends && friends.length> 0) { %>
+                                <div class="btn-group-vertical col-12" role="group"
+                                    aria-label="Basic checkbox toggle button group">
+                                    <% friends.forEach((f)=> { %>
+                                        <input type="checkbox" class="btn-check" name="member_<%= f.user_id %>"
+                                            id="member_<%= f.user_id %>" autocomplete="off">
+                                        <label class="btn btn-outline-primary rounded-0" for="member_<%= f.user_id %>">
+                                            <div class="d-flex align-items-center fw-semibold fs-3">
+                                                <img src="<%= f.profile_image_url %>" class="me-2 rounded-circle"
+                                                    alt="Friend Avatar" style="width: 24px; height: 24px;">
+                                                <span style="font-size: 16px;">
+                                                    <%= f.username %>
+                                                </span>
+                                            </div>
+                                        </label>
+                                    <% }) %>
+                                </div>
+                            <% } else { %>
+                                <div class="bg-white">
+                                    <p class="text-dark p-2">There is no user available.</p>
+                                </div>
+                            <% } %>
+                        </div>
+                    </div>
+                    <hr style="color: white;">
+                    <div class="d-flex justify-content-between">
+                        <div class="d-flex">
+                            <form action="/group-chat" method="post" class="me-2">
+                                <input type="hidden" name="chat_id" value="<%= group.chat_id %>">
+                                <button type="submit" class="btn btn-secondary">Back to chat
+                                    room</button>
+                            </form>
+                        </div>
+                        <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#exampleModal">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor"
+                                class="bi bi-trash3-fill me-1" viewBox="0 0 16 16">
+                                <path
+                                    d="M11 1.5v1h3.5a.5.5 0 0 1 0 1h-.538l-.853 10.66A2 2 0 0 1 11.115 16h-6.23a2 2 0 0 1-1.994-1.84L2.038 3.5H1.5a.5.5 0 0 1 0-1H5v-1A1.5 1.5 0 0 1 6.5 0h3A1.5 1.5 0 0 1 11 1.5m-5 0v1h4v-1a.5.5 0 0 0-.5-.5h-3a.5.5 0 0 0-.5.5M4.5 5.029l.5 8.5a.5.5 0 1 0 .998-.06l-.5-8.5a.5.5 0 1 0-.998.06m6.53-.528a.5.5 0 0 0-.528.47l-.5 8.5a.5.5 0 0 0 .998.058l.5-8.5a.5.5 0 0 0-.47-.528M8 4.5a.5.5 0 0 0-.5.5v8.5a.5.5 0 0 0 1 0V5a.5.5 0 0 0-.5-.5" />
+                            </svg>
+                            Delete Group
+                        </button>
+                    </div>
+            <% } else { %>
+                <div class="text-light">
+                    <img id="profileImage" src="<%= group.group_image_url %>" alt="Profile Image"
+                        class="img-fluid rounded-circle" style="width: 100px; height: 100px;">
+                    <div class="mb-3">
+                        <label for="groupName" class="form-label fw-semibold">Group Name</label>
+                        <input type="text" name="group_name" class="form-control rounded-0 disabled-input"
+                            value="<%= group.group_name %>" autocomplete="off" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <p class="form-label fw-semibold">Group Members</p>
+                        <ul class="list-group rounded-0">
+                            <% members.forEach((m)=> { %>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <div class="media">
+                                        <div class="d-flex align-items-center fs-5">
+                                            <img src="<%= m.profile_image_url %>"
+                                                class="me-2 rounded-circle profile-picture" alt="Friend Avatar"
+                                                style="width: 24px; height: 24px;">
+                                            <span style="font-size: 16px;">
+                                                <%= m.username %>
+                                            </span>
+                                        </div>
+                                    </div>
+                                </li>
+                            <% }) %>
+                        </ul>
+                    </div>
+                    <div>
+                        <form action="/group-chat" method="post">
+                            <input type="hidden" name="chat_id" value="<%= group.chat_id %>">
+                            <button type="submit" class="btn btn-secondary">Back to chat
+                                room</button>
+                        </form>
+                    </div>
+                </div>
+            <% } %>
+        </div>
     </div>
-</div>
+
+    <!-- Modal -->
+    <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5" id="exampleModalLabel">Delete Group Confirmation</h1>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to delete <b><%= group.group_name %></b>?</p>
+                </div>
+                <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form action="/delete-group" method="post">
+                    <input type="hidden" name="chat_id" value="<%= group.chat_id %>">
+                    <button type="submit" class="btn btn-danger">Delete</button>
+                </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<script>
+    const profileImage = document.getElementById('profileImage'); // Get the image element
+    const profileImageInput = document.getElementById('profileImageInput');
+    const submitButton = document.getElementById('submitButton');
+
+    profileImageInput.addEventListener('change', function (event) {
+            const [file] = event.target.files;
+            if (file) {
+                profileImage.src = URL.createObjectURL(file); // Update the src of the image element
+                submitButton.style.display = 'block';
+            }
+        });
+</script>
 
 <%- include("partials/footer.ejs") %>
