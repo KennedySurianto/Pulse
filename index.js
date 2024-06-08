@@ -327,9 +327,9 @@ app.get("/group-settings", ensureAuthenticated, async (req, res) => {
         if (checkUser.rowCount > 0) {
             const group = await req.db.query(getGroupQuery, [group_id]);
             const friends = await req.db.query(getFriendsExceptMembersQuery, [req.user.user_id, group_id]);
-            console.log("friends except members: ", friends.rows);
+            // console.log("friends except members: ", friends.rows);
             const members = await req.db.query(getGroupMembersQuery, [group_id]);
-            console.log("group.rows[0]: ", group.rows[0]);
+            // console.log("group.rows[0]: ", group.rows[0]);
             res.render("auth_group_settings.ejs", { group: group.rows[0], user: req.user, friends: friends.rows, members: members.rows });
         } else {
             res.redirect("/groups");
@@ -362,6 +362,47 @@ app.post('/kick-member', ensureAuthenticated, async (req, res) => {
     } catch (error) {
         console.error(error);
         res.redirect('/');
+    }
+})
+
+app.post('/change-group-picture', upload.single('picture'), ensureAuthenticated, async (req, res) => {
+    if (!req.file) {
+        return res.redirect("/group-settings");
+    }
+    const fileUrl = `${req.protocol}://${req.get('host')}/images/${req.file.filename}`;
+    const { chat_id } = req.body;
+    const getGroupImageURLQuery = `
+        SELECT group_image_url
+        FROM groups
+        WHERE chat_id = $1;
+    `;
+    const updateGroupImageURLQuery = `
+        UPDATE groups
+        SET group_image_url = $1
+        WHERE chat_id = $2;
+    `;
+    try {
+        const group = await req.db.query(getGroupImageURLQuery, [chat_id]);
+        const group_image_url = group.rows[0].group_image_url;
+        // Delete the previous profile image, if it exists
+        if (group_image_url
+            && group_image_url !== `${req.protocol}://${req.get('host')}/images/default2202.png`
+        ) {
+            const previousImagePath = group_image_url.split('/').pop(); // Get the filename from the URL
+            fs.access(`public/images/${previousImagePath}`)
+                .then(async () => {
+                    console.log(`${previousImagePath} exists, deleting...`);
+                    await fs.unlink(`public/images/${previousImagePath}`);
+                })
+                .catch((err) => {
+                    console.log(`${previousImagePath} does not exist`);
+                });
+        }
+        await req.db.query(updateGroupImageURLQuery, [fileUrl, chat_id]);
+        res.redirect("/group-settings");
+    } catch (error) {
+        console.error(error);
+        res.redirect("/")
     }
 })
 
@@ -481,9 +522,18 @@ app.post('/upload-profile-picture', upload.single('picture'), ensureAuthenticate
     const fileUrl = `${req.protocol}://${req.get('host')}/images/${req.file.filename}`;
     try {
         // Delete the previous profile image, if it exists
-        if (req.user.profile_image_url && !req.user.profile_image_url.includes("default2201.png") && req.user.profile_image_url !== "https://picsum.photos/200") {
+        if (req.user.profile_image_url
+            && req.user.profile_image_url !== `${req.protocol}://${req.get('host')}/images/default2201.png`
+        ) {
             const previousImagePath = req.user.profile_image_url.split('/').pop(); // Get the filename from the URL
-            await fs.unlink(`public/images/${previousImagePath}`);
+            fs.access(`public/images/${previousImagePath}`)
+                .then(async () => {
+                    console.log(`${previousImagePath} exists, deleting...`);
+                    await fs.unlink(`public/images/${previousImagePath}`);
+                })
+                .catch((err) => {
+                    console.log(`${previousImagePath} does not exist`);
+                });
         }
         req.user.profile_image_url = fileUrl;
         await req.db.query("UPDATE users SET profile_image_url = $1 WHERE user_id = $2", [fileUrl, req.user.user_id]);

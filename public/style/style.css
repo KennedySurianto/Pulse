@@ -5,3 +5,49 @@ img {
 .blurred-background {
     background-color: rgba(255, 255, 255, 0.1);
 }
+
+main {
+    min-height: 100vh;
+    background: linear-gradient(to bottom, #001F3F, #5300E8);
+}
+
+.navbar-nav {
+    transition: background-color 0.2s ease-in-out;
+}
+
+.username-text {
+    display: inline-block;
+    max-width: 250px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.profile-picture {
+    width: 40px;
+    height: 40px;
+}
+
+.navbar-background {
+    background-color: rgba(0, 0, 0, 0.9);
+}
+
+@media (max-width: 576px) {
+    .username-text {
+        max-width: 125px;
+        /* Reduce the max-width for smaller screens */
+        font-size: 16px;
+        /* Reduce the font size for smaller screens */
+    }
+
+    .profile-picture {
+        width: 24px;
+        /* Reduce the width for smaller screens */
+        height: 24px;
+        /* Reduce the height for smaller screens */
+    }
+
+    .nav-link {
+        font-size: 24px;
+    }
+}
