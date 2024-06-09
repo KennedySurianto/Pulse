@@ -105,11 +105,6 @@ var globalMessage = {
     }
 };
 
-// TEST
-// app.get('/test', (req, res) => {
-//     res.render('test_socket');
-// });
-
 // socket.io
 io.on('connection', (socket) => {
     console.log('a user connected');
@@ -125,36 +120,7 @@ io.on('connection', (socket) => {
         const { chat_id, content, sender_id } = msg;
         console.log('msg:', msg);
 
-        try {
-            const db = await pool.connect();
-
-            // Insert message into the database
-            const insertedMessage = await db.query("INSERT INTO messages (chat_id, content, sender_id) VALUES ($1, $2, $3) RETURNING *", [chat_id, content, sender_id]);
-
-            // Check if any rows were inserted
-            if (insertedMessage.rows.length > 0) {
-                const messageId = insertedMessage.rows[0].message_id;
-
-                // Retrieve the inserted message along with additional user information
-                const message = await db.query("SELECT DISTINCT m.*, u.user_id, username, profile_image_url FROM messages m JOIN users u ON u.user_id = m.sender_id WHERE message_id = $1", [messageId]);
-
-                // Check if the message was retrieved
-                if (message.rows.length > 0) {
-                    const messageToEmit = message.rows[0];
-                    console.log('msgtoemit:', messageToEmit);
-
-                    // Broadcast the message to all clients
-                    io.emit('chat message', messageToEmit);
-                } else {
-                    console.error("Failed to retrieve the inserted message");
-                }
-            } else {
-                console.error("No rows were inserted");
-            }
-            db.release();
-        } catch (error) {
-            console.error(error);
-        }
+        insertIntoMessages(chat_id, sender_id, content);
     });
 
     // Handle disconnection
@@ -352,12 +318,15 @@ app.post("/delete-group", ensureAuthenticated, async (req, res) => {
 })
 
 app.post('/kick-member', ensureAuthenticated, async (req, res) => {
-    const { user_id, chat_id } = req.body;
+    const { user_id, username, chat_id } = req.body;
     const deleteMemberQuery = `
         DELETE FROM participants WHERE user_id = $1 AND chat_id = $2;
     `;
+    const content = `[kicked ${username} from this group]`;
     try {
         await req.db.query(deleteMemberQuery, [user_id, chat_id]);
+        await insertIntoMessages(chat_id, req.user.user_id, content);
+
         res.redirect('/group-settings');
     } catch (error) {
         console.error(error);
@@ -372,8 +341,11 @@ app.post('/rename-group', ensureAuthenticated, async (req, res) => {
         SET group_name = $1
         WHERE chat_id = $2;
     `;
+    const content = `[renamed this group to ${group_name}]`;
     try {
         await req.db.query(updateGroupNameQuery, [group_name, chat_id]);
+        await insertIntoMessages(chat_id, req.user.user_id, content);
+
         res.redirect('/group-settings');
     } catch (error) {
         console.error(error);
@@ -415,6 +387,7 @@ app.post('/change-group-picture', upload.single('picture'), ensureAuthenticated,
                 });
         }
         await req.db.query(updateGroupImageURLQuery, [fileUrl, chat_id]);
+        await insertIntoMessages(chat_id, req.user.user_id, '[changed the group picture]');
         res.redirect("/group-settings");
     } catch (error) {
         console.error(error);
@@ -727,3 +700,34 @@ server.listen(process.env.PORT, '0.0.0.0', () => {
 // app.listen(process.env.PORT, '0.0.0.0', () => {
 //     console.log(`Listening on port ${process.env.PORT}.`);
 // })
+
+async function insertIntoMessages(chat_id, sender_id,content) {
+    try {
+        const db = await pool.connect();
+        const insertedMessage = await db.query("INSERT INTO messages (chat_id, sender_id, content) VALUES ($1, $2, $3) RETURNING message_id", [chat_id, sender_id, content]);
+
+        // Check if any rows were inserted
+        if (insertedMessage.rows.length > 0) {
+            const messageId = insertedMessage.rows[0].message_id;
+
+            // Retrieve the inserted message along with additional user information
+            const message = await db.query("SELECT DISTINCT m.*, u.user_id, username, profile_image_url FROM messages m JOIN users u ON u.user_id = m.sender_id WHERE message_id = $1", [messageId]);
+
+            // Check if the message was retrieved
+            if (message.rows.length > 0) {
+                const messageToEmit = message.rows[0];
+                console.log('msgtoemit:', messageToEmit);
+
+                // Broadcast the message to all clients
+                io.emit('chat message', messageToEmit);
+            } else {
+                console.error("Failed to retrieve the inserted message");
+            }
+        } else {
+            console.error("No rows were inserted");
+        }
+        db.release();
+    } catch (error) {
+        console.error(error);
+    }
+}

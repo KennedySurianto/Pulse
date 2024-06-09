@@ -191,10 +191,11 @@
                         Are you sure you want to kick <span id="kickUsername" class="fw-bold"></span> from this group?
                         <input type="hidden" name="user_id" id="kickUserId">
                         <input type="hidden" name="chat_id" value="<%= group.chat_id %>">
+                        <input type="hidden" name="username" id="kickUsernameInput">
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-danger">Kick</button>
+                        <button id="kickUserConfirmBtn" type="submit" class="btn btn-danger">Kick</button>
                     </div>
                 </form>
             </div>
@@ -206,6 +207,7 @@
         const kickButtons = document.querySelectorAll('.kick-button');
         const kickUserIdInput = document.getElementById('kickUserId');
         const kickUsername = document.getElementById('kickUsername');
+        const kickUsernameInput = document.getElementById('kickUsernameInput');
         const profileImage = document.getElementById('profileImage'); // Get the image element
         const profileImageInput = document.getElementById('profileImageInput');
         const submitButton = document.getElementById('submitButton');
@@ -239,6 +241,7 @@
                 var username = this.getAttribute('data-username');
                 kickUserIdInput.value = userId;
                 kickUsername.innerText = username;
+                kickUsernameInput.value = username;
             });
         });
 

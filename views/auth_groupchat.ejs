@@ -71,8 +71,8 @@
                                     </div>
                                 </div>
                             </div>
-                            <% }) %>
-                                <% } %>
+                        <% }) %>
+                    <% } %>
                 </div>
 
                 <!-- Chat Input -->
@@ -82,7 +82,7 @@
                             <input type="hidden" id="chat-id" value="<%= group.chat_id %>">
 
                             <input type="text" id="message-input" class="form-control"
-                                placeholder="Message <%= group.group_name %>" autocomplete="off" required>
+                                placeholder="Message <%= group.group_name %>" autocomplete="off" autofocus required>
                             <button class="btn btn-primary rounded-0" type="submit">Send</button>
                         </div>
                     </form>
@@ -108,6 +108,9 @@
     <script src="/socket.io/socket.io.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            window.scrollTo({ top: document.body.scrollHeight, behavior: "auto" });
+            window.scrollTo({ top: document.body.scrollHeight, behavior: 'instant' });
+
             const socket = io();
             const chatId = document.getElementById('chat-id').value;
             // Join the chat room
@@ -130,7 +133,6 @@
 
             // Listen for chat messages
             socket.on('chat message', function (msg) {
-                console.log(msg);
                 if (parseInt(msg.chat_id) === parseInt(chatId)) {
                     const item = document.createElement('div');
                     item.className = 'media mb-1';

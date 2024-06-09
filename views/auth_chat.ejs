@@ -85,7 +85,8 @@
     <script src="/socket.io/socket.io.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            window.scrollTo(0, document.body.scrollHeight);
+            window.scrollTo({ top: document.body.scrollHeight, behavior: "auto" });
+            window.scrollTo({ top: document.body.scrollHeight, behavior: 'instant' });
             
             const socket = io();
             const chatId = document.getElementById('chat-id').value;
@@ -110,7 +111,6 @@
 
             // Listen for chat messages
             socket.on('chat message', function (msg) {
-                console.log(msg);
                 if (parseInt(msg.chat_id) === parseInt(chatId)) {
                     const item = document.createElement('div');
                     item.className = 'media mb-1';
