@@ -36,33 +36,33 @@
                         </div>
                         <div class="mb-3">
                             <p class="form-label fw-semibold">Group Members</p>
-                            <div class="p-1" style="overflow-y: auto; height: 400px;">
-                            <ul class="list-group rounded-0">
-                                <% members.forEach((m)=> { %>
-                                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                                        <div class="justify-content-between">
-                                            <div class="d-flex align-items-center fs-5">
-                                                <img src="<%= m.profile_image_url %>"
-                                                    class="me-2 rounded-circle profile-picture" alt="Friend Avatar"
-                                                    style="width: 24px; height: 24px;">
-                                                <span style="font-size: 16px;">
-                                                    <%= m.username %>
-                                                    <% if (parseInt(m.user_id) === parseInt(group.user_id)) { %>
-                                                        <span class="text-primary fw-semibold"> (Leader)</span>
-                                                    <% } %>
-                                                </span>
+                            <div class="p-1" style="overflow-y: auto; max-height: 400px;">
+                                <ul class="list-group rounded-0">
+                                    <% members.forEach((m)=> { %>
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            <div class="justify-content-between">
+                                                <div class="d-flex align-items-center fs-5">
+                                                    <img src="<%= m.profile_image_url %>"
+                                                        class="me-2 rounded-circle profile-picture" alt="Friend Avatar"
+                                                        style="width: 24px; height: 24px;">
+                                                    <span style="font-size: 16px;">
+                                                        <%= m.username %>
+                                                        <% if (parseInt(m.user_id) === parseInt(group.user_id)) { %>
+                                                            <span class="text-primary fw-semibold"> (Leader)</span>
+                                                        <% } %>
+                                                    </span>
+                                                </div>
                                             </div>
-                                        </div>
-                                        <div>
-                                            <% if (parseInt(m.user_id) !== parseInt(group.user_id)) { %>
-                                            <button type="button" class="kick-button btn btn-sm btn-danger rounded-pill" data-user-id="<%= m.user_id %>" data-username="<%= m.username %>" data-bs-toggle="modal" data-bs-target="#exampleModal2">
-                                                Kick
-                                            </button>
-                                            <% } %>
-                                        </div>
-                                    </li>
-                                <% }) %>
-                            </ul>
+                                            <div>
+                                                <% if (parseInt(m.user_id) !== parseInt(group.user_id)) { %>
+                                                <button type="button" class="kick-button btn btn-sm btn-danger rounded-pill" data-user-id="<%= m.user_id %>" data-username="<%= m.username %>" data-bs-toggle="modal" data-bs-target="#exampleModal2">
+                                                    Kick
+                                                </button>
+                                                <% } %>
+                                            </div>
+                                        </li>
+                                    <% }) %>
+                                </ul>
                             </div>
                         </div>
                         <div class="mb-3">
@@ -128,25 +128,27 @@
                     </div>
                     <div class="mb-3">
                         <p class="form-label fw-semibold">Group Members</p>
-                        <ul class="list-group rounded-0">
-                            <% members.forEach((m)=> { %>
-                                <li class="list-group-item d-flex justify-content-between align-items-center">
-                                    <div class="media">
-                                        <div class="d-flex align-items-center fs-5">
-                                            <img src="<%= m.profile_image_url %>"
-                                                class="me-2 rounded-circle profile-picture" alt="Friend Avatar"
-                                                style="width: 24px; height: 24px;">
-                                            <span style="font-size: 16px;">
-                                                <%= m.username %>
-                                                <% if (parseInt(m.user_id) === parseInt(group.user_id)) { %> 
-                                                    <span class="color-primary"> (Leader)</span>
-                                                <% } %>
-                                            </span>
+                        <div class="p-1" style="overflow-y: auto; max-height: 400px;">
+                            <ul class="list-group rounded-0">
+                                <% members.forEach((m)=> { %>
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        <div class="media">
+                                            <div class="d-flex align-items-center fs-5">
+                                                <img src="<%= m.profile_image_url %>"
+                                                    class="me-2 rounded-circle profile-picture" alt="Friend Avatar"
+                                                    style="width: 24px; height: 24px;">
+                                                <span style="font-size: 16px;">
+                                                    <%= m.username %>
+                                                    <% if (parseInt(m.user_id) === parseInt(group.user_id)) { %> 
+                                                        <span class="color-primary"> (Leader)</span>
+                                                    <% } %>
+                                                </span>
+                                            </div>
                                         </div>
-                                    </div>
-                                </li>
-                            <% }) %>
-                        </ul>
+                                    </li>
+                                <% }) %>
+                            </ul>
+                        </div>
                     </div>
                     <small>*only leader can edit this group</small>
                     <hr class="color: white;">
