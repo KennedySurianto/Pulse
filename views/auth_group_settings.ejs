@@ -6,6 +6,7 @@
                 Group Settings
             </h2>
             <hr style="color: white">
+            <%- include("partials/message.ejs") %>
             <% if (parseInt(user.user_id) === parseInt(group.user_id)) { %>
                     <div class="text-light">
                         <div class="mb-3">
@@ -132,7 +133,7 @@
                                                 style="width: 24px; height: 24px;">
                                             <span style="font-size: 16px;">
                                                 <%= m.username %>
-                                                <% if (parseInt(m.user_id)===parseInt(group.user_id)) { %> 
+                                                <% if (parseInt(m.user_id) === parseInt(group.user_id)) { %> 
                                                     <span class="color-primary"> (Leader)</span>
                                                 <% } %>
                                             </span>

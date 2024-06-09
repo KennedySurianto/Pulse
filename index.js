@@ -154,6 +154,7 @@ app.get("/home", ensureAuthenticated, async (req, res) => {
         res.render("auth_home.ejs", { message: globalMessage.getMessage(), friends: friends.rows, friendActive: true });
     } catch (error) {
         console.log(error);
+        globalMessage.setMessage('danger', 'Failed', 'Cannot go to home at the moment');
         res.redirect("/");
     }
 })
@@ -165,6 +166,7 @@ app.get("/pending", ensureAuthenticated, async (req, res) => {
         res.render("auth_pending.ejs", { message: globalMessage.getMessage(), pending: pending.rows, pendingActive: true });
     } catch (error) {
         console.log(error);
+        globalMessage.setMessage('danger', 'Failed', 'Cannot fetch pending users at the moment');
         res.redirect("/");
     }
 })
@@ -175,6 +177,7 @@ app.get("/users", ensureAuthenticated, async (req, res) => {
         res.render("auth_userlist.ejs", { users: users.rows, userActive: true, message: globalMessage.getMessage() });
     } catch (error) {
         console.log(error);
+        globalMessage.setMessage('danger', 'Failed', 'Cannot fetch users at the moment');
         res.redirect("/");
     }
 })
@@ -184,6 +187,7 @@ app.get("/profile", ensureAuthenticated, async (req, res) => {
         res.render("auth_profile.ejs", { user: req.user, profileActive: true, message: globalMessage.getMessage() });
     } catch (error) {
         console.log(error);
+        globalMessage.setMessage('danger', 'Failed', 'Cannot go to your profile at the moment');
         res.redirect("/");
     }
 })
@@ -226,6 +230,7 @@ app.get("/chat", ensureAuthenticated, async (req, res) => {
         res.render("auth_chat.ejs", { chat_id: finalChatId, messages: messages.rows, friend, user: req.user });
     } catch (error) {
         console.error(error);
+        globalMessage.setMessage('danger', 'Failed', 'Cannot chat at the moment');
         res.redirect("/");
     }
 })
@@ -251,6 +256,7 @@ app.get("/groups", ensureAuthenticated, async (req, res) => {
         res.render("auth_groups.ejs", { groupActive: true, groups: groups.rows, friends: friends.rows, message: globalMessage.getMessage() });
     } catch (error) {
         console.error(error);
+        globalMessage.setMessage('danger', 'Failed', 'Cannot fetch groups at the moment');
         res.redirect("/");
     }
 })
@@ -296,12 +302,13 @@ app.get("/group-settings", ensureAuthenticated, async (req, res) => {
             // console.log("friends except members: ", friends.rows);
             const members = await req.db.query(getGroupMembersQuery, [group_id]);
             // console.log("group.rows[0]: ", group.rows[0]);
-            res.render("auth_group_settings.ejs", { group: group.rows[0], user: req.user, friends: friends.rows, members: members.rows });
+            res.render("auth_group_settings.ejs", { group: group.rows[0], user: req.user, friends: friends.rows, members: members.rows, message: globalMessage.getMessage() });
         } else {
             res.redirect("/groups");
         }
     } catch (error) {
         console.error(error);
+        globalMessage.setMessage('danger', 'Failed', 'Cannot go to this group settings at the moment');
         res.redirect("/");
     }
 })
@@ -310,9 +317,11 @@ app.post("/delete-group", ensureAuthenticated, async (req, res) => {
     const chat_id = req.body.chat_id;
     try {
         await req.db.query("DELETE FROM chats WHERE chat_id = $1", [chat_id]);
+        globalMessage.setMessage('success', 'Success', 'Group deleted successfully');
         res.redirect("/groups");
     } catch (error) {
         console.error(error);
+        globalMessage.setMessage('danger', 'Failed', 'Cannot delete this group at the moment');
         res.redirect("/");
     }
 })
@@ -326,7 +335,9 @@ app.post('/kick-member', ensureAuthenticated, async (req, res) => {
     try {
         await req.db.query(deleteMemberQuery, [user_id, chat_id]);
         await insertIntoMessages(chat_id, req.user.user_id, content);
-
+        // Emit event to inform clients
+        io.to(chat_id).emit('kick member', { user_id, chat_id });
+        globalMessage.setMessage('success', 'Success', 'Members kicked successfully');
         res.redirect('/group-settings');
     } catch (error) {
         console.error(error);
@@ -336,6 +347,10 @@ app.post('/kick-member', ensureAuthenticated, async (req, res) => {
 
 app.post('/rename-group', ensureAuthenticated, async (req, res) => {
     const { chat_id, group_name } = req.body;
+    if (group_name.length > 20) {
+        globalMessage.setMessage('danger', 'Failed', 'Group name must be below 21 characters');
+        return res.redirect('/group-settings');
+    }
     const updateGroupNameQuery = `
         UPDATE groups
         SET group_name = $1
@@ -345,10 +360,11 @@ app.post('/rename-group', ensureAuthenticated, async (req, res) => {
     try {
         await req.db.query(updateGroupNameQuery, [group_name, chat_id]);
         await insertIntoMessages(chat_id, req.user.user_id, content);
-
+        globalMessage.setMessage('success', 'Success', 'Group renamed successfully');
         res.redirect('/group-settings');
     } catch (error) {
         console.error(error);
+        globalMessage.setMessage('danger', 'Failed', 'Cannot rename this group at the moment');
         res.redirect('/');
     }
 })
@@ -388,9 +404,11 @@ app.post('/change-group-picture', upload.single('picture'), ensureAuthenticated,
         }
         await req.db.query(updateGroupImageURLQuery, [fileUrl, chat_id]);
         await insertIntoMessages(chat_id, req.user.user_id, '[changed the group picture]');
+        globalMessage.setMessage('success', 'Success', 'Group picture changed successfully');
         res.redirect("/group-settings");
     } catch (error) {
         console.error(error);
+        globalMessage.setMessage('danger', 'Failed', 'Cannot change this group picture at the moment');
         res.redirect("/")
     }
 })
@@ -434,6 +452,7 @@ app.get("/group-chat", ensureAuthenticated, async (req, res) => {
         }
     } catch (error) {
         console.error(error);
+        globalMessage.setMessage('danger', 'Failed', 'Cannot chat in this gorup at the moment');
         res.redirect("/");
     }
 })
@@ -458,6 +477,8 @@ app.post("/create-group", upload.single('picture'), ensureAuthenticated, async (
     const insertIntoParticipantsQuery = `
         INSERT INTO participants (chat_id, user_id) VALUES ($1, $2);
     `;
+    let content = '[added ';
+    let usernames = [];
     try {
         await req.db.query("BEGIN;");
 
@@ -468,16 +489,22 @@ app.post("/create-group", upload.single('picture'), ensureAuthenticated, async (
         await req.db.query(insertIntoGroupLeadersQuery, [chat_id, req.user.user_id]);
         await req.db.query(insertIntoParticipantsQuery, [chat_id, req.user.user_id]);
 
+        insertIntoMessages(chat_id, req.user.user_id, '[created this group]');
         for (const memberId of memberIds) {
+            const usernameResult = await req.db.query("SELECT username FROM users WHERE user_id = $1;", [memberId]);
+            const username = usernameResult.rows[0].username;
+            usernames.push(username);
             await req.db.query(insertIntoParticipantsQuery, [chat_id, memberId]);
         }
-
+        content += `${usernames.join(', ')} to this group]`;
+        insertIntoMessages(chat_id, req.user.user_id, content);
         await req.db.query("COMMIT;")
         globalMessage.setMessage('success', `${groupName} created successfully`, 'Start chatting now');
         res.redirect("/groups");
     } catch (error) {
         await req.db.query("ROLLBACK;");
         console.error(error);
+        globalMessage.setMessage('danger', 'Failed', 'Cannot create groups at the moment');
         res.redirect("/");
     }
 })
@@ -490,15 +517,25 @@ app.post('/add-members', ensureAuthenticated, async (req, res) => {
     const insertIntoParticipantsQuery = `
         INSERT INTO participants (chat_id, user_id) VALUES ($1, $2);
     `;
+    let content = '[added ';
     try {
+        const usernames = [];
         await req.db.query("BEGIN;");
         for (const memberId of memberIds) {
+            const username = await req.db.query("SELECT username FROM users WHERE user_id = $1;", [memberId]);
+            usernames.push(username.rows[0].username);
             await req.db.query(insertIntoParticipantsQuery, [chat_id, memberId]);
         }
+        content += `${usernames.join(', ')} to this group]`;
+        console.log(content);
+        insertIntoMessages(chat_id, req.user.user_id, content);
         await req.db.query("COMMIT;");
+        globalMessage.setMessage('success', 'Success', 'Members added successfully');
         res.redirect("/group-settings");
     } catch (error) {
         await req.db.query("ROLLBACK;");
+        console.error(error);
+        globalMessage.setMessage('danger', 'Failed', 'Cannot add members at the moment');
         res.redirect("/");
     }
 })
@@ -527,9 +564,11 @@ app.post('/upload-profile-picture', upload.single('picture'), ensureAuthenticate
         }
         req.user.profile_image_url = fileUrl;
         await req.db.query("UPDATE users SET profile_image_url = $1 WHERE user_id = $2", [fileUrl, req.user.user_id]);
+        globalMessage.setMessage('success', 'Success', 'Profile picture changed successfully')
         res.redirect("/profile");
     } catch (error) {
         console.error(error);
+        globalMessage.setMessage('danger', 'Failed', 'Cannot change profile picture at the moment');
         res.redirect("/")
     }
 });
@@ -544,6 +583,7 @@ app.post("/remove-friend", ensureAuthenticated, async (req, res) => {
         res.redirect("/home");
     } catch (error) {
         console.log(error);
+        globalMessage.setMessage('danger', 'Failed', 'Cannot remove friends at the moment');
         res.redirect("/");
     }
 })
@@ -561,6 +601,7 @@ app.post("/add-friend", ensureAuthenticated, async (req, res) => {
         (wasPending) ? res.redirect("/pending") : res.redirect("/users");
     } catch (error) {
         console.log(error);
+        globalMessage.setMessage('danger', 'Failed', 'Cannot add friends at the moment');
         res.redirect("/");
     }
 })
@@ -576,7 +617,7 @@ app.post("/change-password", ensureAuthenticated, async (req, res) => {
             console.log("password incorrect")
             globalMessage.setMessage("danger", "Incorrect password", "Make sure you entered the correct password");
         } else if (newPassword.length < 8) {
-            globalMessage.setMessage("danger", "Password invalid", "Make sure password is more than or equal to 8 characters");
+            globalMessage.setMessage("danger", "Password invalid", "Make sure password is at least 8 characters");
         } else if (newPassword != confirmPassword) {
             globalMessage.setMessage("danger", "Password does not match", "Make sure the password match");
         } else {
@@ -591,6 +632,7 @@ app.post("/change-password", ensureAuthenticated, async (req, res) => {
         res.redirect("/profile");
     } catch (error) {
         console.error(error);
+        globalMessage.setMessage('danger', 'Failed', 'Cannot change password at the moment');
         res.redirect("/");
     }
 })
@@ -617,10 +659,10 @@ app.post("/register-post", async (req, res) => {
             globalMessage.setMessage("danger", "Username already exist", "Try using a different username");
             return res.redirect("/register");
         } else if (username.length > 15) {
-            globalMessage.setMessage("danger", "Invalid username", "Make sure the username length is less than or equal to 15 characters");
+            globalMessage.setMessage("danger", "Invalid username", "Make sure the username length is below 16 characters");
             return res.redirect("/register");
         } else if (password.length < 8) {
-            globalMessage.setMessage("danger", "Password invalid", "Make sure the password length is more or equal to 8 characters");
+            globalMessage.setMessage("danger", "Password invalid", "Make sure the password length is at least 8 characters");
             return res.redirect("/register");
         } else {
             if (password !== password_confirmation) {
@@ -704,9 +746,13 @@ server.listen(process.env.PORT, '0.0.0.0', () => {
 //     console.log(`Listening on port ${process.env.PORT}.`);
 // })
 
-async function insertIntoMessages(chat_id, sender_id,content) {
+async function insertIntoMessages(chat_id, sender_id, content) {
     try {
         const db = await pool.connect();
+        const checkSender = await db.query("SELECT * FROM participants WHERE chat_id = $1 AND user_id = $2", [chat_id, sender_id]);
+        if (checkSender.rowCount === 0) {
+            return;
+        }
         const insertedMessage = await db.query("INSERT INTO messages (chat_id, sender_id, content) VALUES ($1, $2, $3) RETURNING message_id", [chat_id, sender_id, content]);
 
         if (insertedMessage.rows.length > 0) {

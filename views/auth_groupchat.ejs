@@ -131,6 +131,16 @@
                 }
             });
 
+            socket.on('kick member', (data) => {
+                const { user_id, chat_id } = data;
+                if (parseInt(user_id) === parseInt('<%= user.user_id %>')) {
+                    // If the current user is the one being kicked, handle accordingly
+                    alert('You have been kicked from the group chat');
+                    socket.emit('leave chat', chat_id); // Leave the chat room
+                    window.location.href = '/groups'; // Redirect or take other appropriate action
+                }
+            });
+
             // Listen for chat messages
             socket.on('chat message', function (msg) {
                 if (parseInt(msg.chat_id) === parseInt(chatId)) {

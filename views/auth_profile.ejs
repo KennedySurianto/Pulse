@@ -50,6 +50,7 @@
                 <%= user.username %>'s Profile
             </h2>
             <hr style="color: white">
+            <%- include("partials/message.ejs") %>
             <!-- Profile Image -->
             <div class="mb-3">
                 <form action="/upload-profile-picture" method="post" enctype="multipart/form-data">
@@ -78,7 +79,6 @@
             <!-- Change Password Form -->
             <form action="/change-password" method="post" class="mb-3">
                 <h4 class="text-light">Change Password</h4>
-                <%- include("partials/message.ejs") %>
                 <div class="mb-3">
                     <label for="currentPassword" class="form-label text-light">Current Password</label>
                     <input type="password" id="currentPassword" name="currentPassword" class="form-control rounded-0" required>
