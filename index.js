@@ -200,8 +200,18 @@ app.post("/chat", ensureAuthenticated, async (req, res) => {
 
 app.get("/chat", ensureAuthenticated, async (req, res) => {
     const friend_id = req.session.friend_id;
+    const getChatQuery = `
+        SELECT DISTINCT p1.chat_id 
+        FROM participants p1 
+            JOIN participants p2 ON p1.chat_id = p2.chat_id 
+        WHERE p1.user_id = $1 AND p2.user_id = $2
+            AND p1.chat_id NOT IN (
+                SELECT chat_id
+                FROM groups
+            );
+    `;
     try {
-        let chatQuery = await req.db.query("SELECT DISTINCT p1.chat_id FROM participants p1 JOIN participants p2 ON p1.chat_id = p2.chat_id WHERE p1.user_id = $1 AND p2.user_id = $2", [req.user.user_id, friend_id]);
+        let chatQuery = await req.db.query(getChatQuery, [req.user.user_id, friend_id]);
 
         const friendQuery = await req.db.query("SELECT user_id, username, profile_image_url FROM users WHERE user_id = $1", [friend_id]);
         const friend = friendQuery.rows[0];
@@ -454,6 +464,17 @@ app.get("/group-chat", ensureAuthenticated, async (req, res) => {
         console.error(error);
         globalMessage.setMessage('danger', 'Failed', 'Cannot chat in this gorup at the moment');
         res.redirect("/");
+    }
+})
+
+app.post('/delete-message', ensureAuthenticated, async (req, res) => {
+    const message_id = req.body.message_id;
+    try {
+        await req.db.query('DELETE FROM messages WHERE message_id = $1;', [message_id]);
+        (req.body.wasGroup) ? res.redirect('/group-chat'): res.redirect('/chat');
+    } catch (error) {
+        console.error(error);
+        res.redirect('/');
     }
 })
 
