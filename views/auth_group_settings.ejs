@@ -36,6 +36,7 @@
                         </div>
                         <div class="mb-3">
                             <p class="form-label fw-semibold">Group Members</p>
+                            <div class="p-1" style="overflow-y: auto; height: 400px;">
                             <ul class="list-group rounded-0">
                                 <% members.forEach((m)=> { %>
                                     <li class="list-group-item d-flex justify-content-between align-items-center">
@@ -62,31 +63,35 @@
                                     </li>
                                 <% }) %>
                             </ul>
+                            </div>
                         </div>
                         <div class="mb-3">
                             <p class="form-label fw-semibold">Add Group Members From Friend List</p>
                             <% if (locals.friends && friends.length> 0) { %>
-                                <form action="/add-members" method="post">
-                                    <div class="btn-group-vertical col-12" role="group" aria-label="Basic checkbox toggle button group">
-                                        <input type="hidden" name="chat_id" value="<%= group.chat_id %>">
-                                        <% friends.forEach((f)=> { %>
-                                            <input type="checkbox" class="btn-check" name="member_<%= f.friend_id %>"
-                                                id="member_<%= f.friend_id %>" autocomplete="off">
-                                            <label class="btn btn-outline-primary rounded-0" for="member_<%= f.friend_id %>">
-                                                <div class="d-flex align-items-center fw-semibold fs-3">
-                                                    <img src="<%= f.profile_image_url %>" class="me-2 rounded-circle"
-                                                        alt="Friend Avatar" style="width: 24px; height: 24px;">
-                                                    <span style="font-size: 16px;">
-                                                        <%= f.username %>
-                                                    </span>
-                                                </div>
-                                            </label>
-                                        <% }) %>
-                                        <div>
-                                            <button id="submitButtonCheck" type="submit" class="btn btn-primary mt-2" style="display: none;">Add new members</button>
+                                <div class="scrollable-checkbox-group p-1">
+                                    <form action="/add-members" method="post">
+                                        <div class="btn-group-vertical col-12" role="group" aria-label="Basic checkbox toggle button group">
+                                            <input type="hidden" name="chat_id" value="<%= group.chat_id %>">
+                                            <% friends.forEach((f)=> { %>
+                                                <input type="checkbox" class="btn-check" name="member_<%= f.friend_id %>"
+                                                    id="member_<%= f.friend_id %>" autocomplete="off">
+                                                <label class="btn btn-outline-primary rounded-0" for="member_<%= f.friend_id %>">
+                                                    <div class="d-flex align-items-center fw-semibold fs-3">
+                                                        <img src="<%= f.profile_image_url %>" class="me-2 rounded-circle"
+                                                            alt="Friend Avatar" style="width: 24px; height: 24px;">
+                                                        <span style="font-size: 16px;">
+                                                            <%= f.username %>
+                                                        </span>
+                                                    </div>
+                                                </label>
+                                            <% }) %>
                                         </div>
-                                    </div>
-                                </form>
+                                    </form>
+                                </div>
+                                <div>
+                                    <button id="submitButtonCheck" type="submit" class="btn btn-primary mt-2" style="display: none;">Add new
+                                        members</button>
+                                </div>
                             <% } else { %>
                                 <div class="bg-white">
                                     <p class="text-dark p-2">There is no user available.</p>
