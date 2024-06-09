@@ -4,6 +4,7 @@
         <div class="border border-light blurred-background p-5 mb-5">
             <h2 class="text-light fw-bold text-uppercase">Friend List</h2>
             <hr style="color: white;">
+            <%- include("partials/message.ejs") %>
             <ul class="list-group rounded-0">
                 <% if (locals.friends && friends.length> 0) { %>
                     <% friends.forEach((f)=> { %>
@@ -44,6 +45,7 @@
                                                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No</button>
                                                 <form action="/remove-friend" method="post">
                                                     <input type="hidden" name="friend_id" value="<%= f.friend_id %>">
+                                                    <input type="hidden" name="username" value="<%= f.username %>">
                                                     <button type="submit" class="btn btn-danger">Remove</button>
                                                 </form>
                                             </div>

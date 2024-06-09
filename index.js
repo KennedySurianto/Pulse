@@ -172,7 +172,7 @@ app.get("/pending", ensureAuthenticated, async (req, res) => {
 app.get("/users", ensureAuthenticated, async (req, res) => {
     try {
         const users = await req.db.query("SELECT u.user_id, username, profile_image_url FROM users u WHERE u.user_id <> $1 AND u.user_id NOT IN (SELECT friend_id FROM friends WHERE user_id = $1)", [req.user.user_id]);
-        res.render("auth_userlist.ejs", { users: users.rows, userActive: true });
+        res.render("auth_userlist.ejs", { users: users.rows, userActive: true, message: globalMessage.getMessage() });
     } catch (error) {
         console.log(error);
         res.redirect("/");
@@ -248,7 +248,7 @@ app.get("/groups", ensureAuthenticated, async (req, res) => {
         const groups = await req.db.query(getGroupsQuery, [req.user.user_id]);
         const friends = await req.db.query(getFriendsQuery, [req.user.user_id]);
 
-        res.render("auth_groups.ejs", { groupActive: true, groups: groups.rows, friends: friends.rows });
+        res.render("auth_groups.ejs", { groupActive: true, groups: groups.rows, friends: friends.rows, message: globalMessage.getMessage() });
     } catch (error) {
         console.error(error);
         res.redirect("/");
@@ -473,6 +473,7 @@ app.post("/create-group", upload.single('picture'), ensureAuthenticated, async (
         }
 
         await req.db.query("COMMIT;")
+        globalMessage.setMessage('success', `${groupName} created successfully`, 'Start chatting now');
         res.redirect("/groups");
     } catch (error) {
         await req.db.query("ROLLBACK;");
@@ -535,10 +536,11 @@ app.post('/upload-profile-picture', upload.single('picture'), ensureAuthenticate
 
 app.post("/remove-friend", ensureAuthenticated, async (req, res) => {
     const friend_id = parseInt(req.body.friend_id);
+    const username = req.body.username;
 
     try {
         await req.db.query("DELETE FROM friends WHERE user_id = $1 AND friend_id = $2", [req.user.user_id, friend_id]);
-
+        globalMessage.setMessage('success', 'Success', `${username} removed from friend list`);
         res.redirect("/home");
     } catch (error) {
         console.log(error);
@@ -549,12 +551,13 @@ app.post("/remove-friend", ensureAuthenticated, async (req, res) => {
 app.post("/add-friend", ensureAuthenticated, async (req, res) => {
     const friend_id = parseInt(req.body.user_id);
     const wasPending = req.body.wasPending;
+    const username = req.body.username;
     try {
         await req.db.query("INSERT INTO friends (user_id, friend_id) VALUES ($1, $2)", [
             req.user.user_id,
             friend_id
         ]);
-        globalMessage.setMessage("success", "Friend added successfully", "Try chatting now");
+        globalMessage.setMessage("success", `Added ${username} successfully`, "Try chatting now");
         (wasPending) ? res.redirect("/pending") : res.redirect("/users");
     } catch (error) {
         console.log(error);
@@ -706,19 +709,13 @@ async function insertIntoMessages(chat_id, sender_id,content) {
         const db = await pool.connect();
         const insertedMessage = await db.query("INSERT INTO messages (chat_id, sender_id, content) VALUES ($1, $2, $3) RETURNING message_id", [chat_id, sender_id, content]);
 
-        // Check if any rows were inserted
         if (insertedMessage.rows.length > 0) {
             const messageId = insertedMessage.rows[0].message_id;
-
-            // Retrieve the inserted message along with additional user information
             const message = await db.query("SELECT DISTINCT m.*, u.user_id, username, profile_image_url FROM messages m JOIN users u ON u.user_id = m.sender_id WHERE message_id = $1", [messageId]);
-
-            // Check if the message was retrieved
+            
             if (message.rows.length > 0) {
                 const messageToEmit = message.rows[0];
-                console.log('msgtoemit:', messageToEmit);
-
-                // Broadcast the message to all clients
+                // console.log('msgtoemit:', messageToEmit);
                 io.emit('chat message', messageToEmit);
             } else {
                 console.error("Failed to retrieve the inserted message");

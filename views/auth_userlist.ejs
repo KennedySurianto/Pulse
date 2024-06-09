@@ -4,6 +4,7 @@
     <div class="border border-light blurred-background p-5 mb-5">
         <h2 class="text-light fw-bold text-uppercase">User List</h2>
         <hr style="color: white;">
+        <%- include("partials/message.ejs") %>
         <ul class="list-group rounded-0">
         <div class="col-12 mb-3">
             <div class="input-group">
@@ -22,6 +23,7 @@
                     </div>
                     <form action="/add-friend" method="post">
                         <input type="hidden" name="user_id" value="<%= u.user_id %>">
+                        <input type="hidden" name="username" value="<%= u.username %>">
                         <button type="submit" class="btn btn-primary rounded-pill">Add friend</button>
                     </form>
                 </li>

@@ -4,6 +4,7 @@
     <div class="border border-light blurred-background p-5 mb-5">
         <h2 class="text-light fw-bold text-uppercase">Incoming Friend Requests</h2>
         <hr style="color: white;">
+        <%- include("partials/message.ejs") %>
         <ul class="list-group rounded-0">
             <% if (locals.pending && pending.length> 0) { %>
                 <% pending.forEach((p)=> { %>
@@ -24,6 +25,7 @@
                             <form action="/add-friend" method="post">
                                 <input type="hidden" name="user_id" value="<%= p.user_id %>">
                                 <input type="hidden" name="wasPending" value="true">
+                                <input type="hidden" name="username", value="<%= p.username %>">
                                 <button type="submit" class="btn btn-success rounded-pill">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-check"
                                         viewBox="0 0 16 16">
