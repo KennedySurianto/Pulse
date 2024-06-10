@@ -55,28 +55,31 @@
                     <h1 class="modal-title fs-5 fw-bold text-uppercase" id="exampleModalLabel">Create New Group</h1>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="container">
+                <div class="modal-body">
                     <div class="mb-3">
                         <label for="groupName" class="form-label fw-semibold">Group Name</label>
                         <input type="text" name="groupName" class="form-control rounded-0" placeholder="Group Mantep" autocomplete="off" required>
                     </div>
                     <div class="mb-3">
                         <label for="formFile" class="form-label fw-semibold">Group Picture</label>
-                        <input class="form-control" type="file" id="formFile" accept="image/*" name="picture">
+                        <input class="form-control rounded-0" type="file" id="formFile" accept="image/*" name="picture">
                     </div>
                     <p class="form-label fw-semibold">Add Group Members</p>
-                    <div class="scrollable-checkbox-group p-1">
-                        <div class="btn-group-vertical col-12" role="group" aria-label="Basic checkbox toggle button group">
-                            <% friends.forEach((f) => { %>
-                                <input type="checkbox" class="btn-check" name="member_<%= f.user_id %>" id="member_<%= f.user_id %>" autocomplete="off">
-                                <label class="btn btn-outline-primary rounded-0" for="member_<%= f.user_id %>">
+                    <div class="scrollable-checkbox-group p-1 border">
+                        <% friends.forEach((f) => { %>
+                            <div class="form-check ms-1">
+                                <input class="form-check-input" type="checkbox" name="member_<%= f.user_id %>" id="member_<%= f.user_id %>">
+                                <label class="form-check-label" for="member_<%= f.user_id %>">
                                     <div class="d-flex align-items-center fw-semibold fs-3">
-                                        <img src="<%= f.profile_image_url %>" class="me-2 rounded-circle" alt="Friend Avatar" style="width: 24px; height: 24px;">
-                                        <span style="font-size: 16px;"><%= f.username %></span>
+                                        <img src="<%= f.profile_image_url %>" class="me-2 rounded-circle" alt="Friend Avatar"
+                                            style="width: 24px; height: 24px;">
+                                        <span style="font-size: 16px;">
+                                            <%= f.username %>
+                                        </span>
                                     </div>
                                 </label>
-                            <% }) %>
-                        </div>
+                            </div>
+                        <% }) %>
                     </div>
                 </div>
                 <div class="modal-footer">
