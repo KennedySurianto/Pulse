@@ -47,7 +47,7 @@
 
 <!-- MODAL -->
 <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content rounded-0">
             <% if (locals.friends && friends.length > 0) { %>
             <form action="/create-group" method="post" enctype="multipart/form-data">
@@ -55,7 +55,7 @@
                     <h1 class="modal-title fs-5 fw-bold text-uppercase" id="exampleModalLabel">Create New Group</h1>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body">
+                <div class="container">
                     <div class="mb-3">
                         <label for="groupName" class="form-label fw-semibold">Group Name</label>
                         <input type="text" name="groupName" class="form-control rounded-0" placeholder="Group Mantep" autocomplete="off" required>
@@ -65,16 +65,18 @@
                         <input class="form-control" type="file" id="formFile" accept="image/*" name="picture">
                     </div>
                     <p class="form-label fw-semibold">Add Group Members</p>
-                    <div class="btn-group-vertical col-12" role="group" aria-label="Basic checkbox toggle button group">
-                        <% friends.forEach((f) => { %>
-                            <input type="checkbox" class="btn-check" name="member_<%= f.user_id %>" id="member_<%= f.user_id %>" autocomplete="off">
-                            <label class="btn btn-outline-primary rounded-0" for="member_<%= f.user_id %>">
-                                <div class="d-flex align-items-center fw-semibold fs-3">
-                                    <img src="<%= f.profile_image_url %>" class="me-2 rounded-circle" alt="Friend Avatar" style="width: 24px; height: 24px;">
-                                    <span style="font-size: 16px;"><%= f.username %></span>
-                                </div>
-                            </label>
-                        <% }) %>
+                    <div class="scrollable-checkbox-group p-1">
+                        <div class="btn-group-vertical col-12" role="group" aria-label="Basic checkbox toggle button group">
+                            <% friends.forEach((f) => { %>
+                                <input type="checkbox" class="btn-check" name="member_<%= f.user_id %>" id="member_<%= f.user_id %>" autocomplete="off">
+                                <label class="btn btn-outline-primary rounded-0" for="member_<%= f.user_id %>">
+                                    <div class="d-flex align-items-center fw-semibold fs-3">
+                                        <img src="<%= f.profile_image_url %>" class="me-2 rounded-circle" alt="Friend Avatar" style="width: 24px; height: 24px;">
+                                        <span style="font-size: 16px;"><%= f.username %></span>
+                                    </div>
+                                </label>
+                            <% }) %>
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">

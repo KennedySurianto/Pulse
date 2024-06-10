@@ -703,7 +703,7 @@ app.post("/register-post", async (req, res) => {
 
                         req.login(user, (err) => {
                             console.log(err);
-                            setMessage(req, "success", "Account created successfully", "You can start chatting now");
+                            setMessage(req, "success", "Account created successfully", "You can start adding friends now");
                             res.redirect("/home");
                         })
                     }
