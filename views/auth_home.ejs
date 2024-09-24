@@ -5,10 +5,16 @@
             <h2 class="text-light fw-bold text-uppercase">Friend List</h2>
             <hr style="color: white;">
             <%- include("partials/message.ejs") %>
+            <div class="col-12 mb-3">
+                <div class="input-group">
+                    <input type="text" id="searchInput" name="username" class="form-control rounded-0" placeholder="Search" autocomplete="off"
+                        required>
+                </div>
+            </div>
             <ul class="list-group rounded-0">
                 <% if (locals.friends && friends.length> 0) { %>
                     <% friends.forEach((f)=> { %>
-                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <li class="user list-group-item d-flex justify-content-between align-items-center">
                             <div class="media">
                                 <div class="d-flex align-items-center fw-semibold fs-3">
                                     <img src="<%= f.profile_image_url %>" class="me-2 rounded-circle profile-picture"
@@ -68,5 +74,20 @@
             </ul>
         </div>
     </div>
+
+    <script>
+        document.getElementById('searchInput').addEventListener('input', function () {
+            const query = this.value.toLowerCase();
+            const users = document.querySelectorAll('.user');
+            users.forEach(user => {
+                const username = user.querySelector('.username-text').textContent.toLowerCase();
+                if (username.includes(query)) {
+                    user.classList.remove('d-none');
+                } else {
+                    user.classList.add('d-none');
+                }
+            });
+        });
+    </script>
 
 <%- include("partials/footer.ejs") %>
