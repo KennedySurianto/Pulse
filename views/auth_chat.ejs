@@ -1,5 +1,5 @@
 <%- include("partials/auth_header.ejs") %>
-    
+
     <!-- Chat Container -->
     <div class="container py-4">
         <div class="row h-100 m-1">
@@ -12,74 +12,82 @@
                             <div class="media mb-1">
                                 <div class="media-body text-light">
                                     <div class="d-flex justify-content-between">
-                                        <div class="d-flex py-1">
+                                        <div class="w-100 d-flex py-1">
                                             <div class="d-flex flex-column justify-content-start">
-                                                <img src="<%= m.profile_image_url %>" class="me-2 rounded-circle profile-picture" alt="Friend Avatar"
+                                                <img src="<%= m.profile_image_url %>"
+                                                    class="me-2 rounded-circle profile-picture" alt="Friend Avatar"
                                                     style="width: 40px; height: 40px;">
                                             </div>
-                                            <div>
-                                                <div class="d-flex align-items-center">
-                                                    <h4 class="me-2">
-                                                        <%= m.username %>
-                                                    </h4>
-                                                    <small>
-                                                        <%= (()=> {
-                                                            const date = new Date(m.created_at);
-                                                            const now = new Date();
-                                            
-                                                            // Get the time part in 24-hour format
-                                                            const time = date.toLocaleTimeString([], { hour: '2-digit',
-                                                            minute: '2-digit', hourCycle: 'h23' });
-                                            
-                                                            // Function to check if two dates are on the same day
-                                                            const isSameDay = (d1, d2) =>
-                                                            d1.getFullYear() === d2.getFullYear() &&
-                                                            d1.getMonth() === d2.getMonth() &&
-                                                            d1.getDate() === d2.getDate();
-                                            
-                                                            // Check if the date is today
-                                                            if (isSameDay(date, now)) {
-                                                            return `Today ${time}`;
-                                                            }
-                                            
-                                                            // Check if the date is yesterday
-                                                            const yesterday = new Date();
-                                                            yesterday.setDate(now.getDate() - 1);
-                                                            if (isSameDay(date, yesterday)) {
-                                                            return `Yesterday ${time}`;
-                                                            }
-                                            
-                                                            // If neither, format as mm/dd/yyyy
-                                                            const formattedDate = date.toLocaleDateString([], { month:
-                                                            '2-digit', day: '2-digit', year: 'numeric' });
-                                                            return `${time} ${formattedDate}`;
-                                                            })() %>
-                                                    </small>
+                                            <div class="w-100">
+                                                <div class="d-flex justify-content-between">
+                                                    <div class="d-flex align-items-center">
+                                                        <h4 class="me-2">
+                                                            <%= m.username %>
+                                                        </h4>
+                                                        <small>
+                                                            <%= (()=> {
+                                                                const date = new Date(m.created_at);
+                                                                const now = new Date();
+
+                                                                // Get the time part in 24-hour format
+                                                                const time = date.toLocaleTimeString([], { hour:
+                                                                '2-digit',
+                                                                minute: '2-digit', hourCycle: 'h23' });
+
+                                                                // Function to check if two dates are on the same day
+                                                                const isSameDay = (d1, d2) =>
+                                                                d1.getFullYear() === d2.getFullYear() &&
+                                                                d1.getMonth() === d2.getMonth() &&
+                                                                d1.getDate() === d2.getDate();
+
+                                                                // Check if the date is today
+                                                                if (isSameDay(date, now)) {
+                                                                return `Today ${time}`;
+                                                                }
+
+                                                                // Check if the date is yesterday
+                                                                const yesterday = new Date();
+                                                                yesterday.setDate(now.getDate() - 1);
+                                                                if (isSameDay(date, yesterday)) {
+                                                                return `Yesterday ${time}`;
+                                                                }
+
+                                                                // If neither, format as mm/dd/yyyy
+                                                                const formattedDate = date.toLocaleDateString([], {
+                                                                month:
+                                                                '2-digit', day: '2-digit', year: 'numeric' });
+                                                                return `${time} ${formattedDate}`;
+                                                                })() %>
+                                                        </small>
+                                                    </div>
+                                                    <% if (parseInt(user.user_id)===parseInt(m.sender_id)) { %>
+                                                        <div>
+                                                            <form action="/delete-message" method="post">
+                                                                <input type="hidden" name="message_id"
+                                                                    value="<%= m.message_id %>">
+                                                                <button type="submit" class="btn btn-danger btn-sm">
+                                                                    <svg xmlns="http://www.w3.org/2000/svg" width="14"
+                                                                        height="14" fill="currentColor"
+                                                                        class="bi bi-trash3-fill" viewBox="0 0 16 16">
+                                                                        <path
+                                                                            d="M11 1.5v1h3.5a.5.5 0 0 1 0 1h-.538l-.853 10.66A2 2 0 0 1 11.115 16h-6.23a2 2 0 0 1-1.994-1.84L2.038 3.5H1.5a.5.5 0 0 1 0-1H5v-1A1.5 1.5 0 0 1 6.5 0h3A1.5 1.5 0 0 1 11 1.5m-5 0v1h4v-1a.5.5 0 0 0-.5-.5h-3a.5.5 0 0 0-.5.5M4.5 5.029l.5 8.5a.5.5 0 1 0 .998-.06l-.5-8.5a.5.5 0 1 0-.998.06m6.53-.528a.5.5 0 0 0-.528.47l-.5 8.5a.5.5 0 0 0 .998.058l.5-8.5a.5.5 0 0 0-.47-.528M8 4.5a.5.5 0 0 0-.5.5v8.5a.5.5 0 0 0 1 0V5a.5.5 0 0 0-.5-.5" />
+                                                                    </svg>
+                                                                </button>
+                                                            </form>
+                                                        </div>
+                                                        <% } %>
                                                 </div>
-                                                <p>
+                                                <p class="text-break">
                                                     <%= m.content %>
                                                 </p>
                                             </div>
                                         </div>
-                                        <% if (parseInt(user.user_id) === parseInt(m.sender_id)) { %>
-                                            <div>
-                                                <form action="/delete-message" method="post">
-                                                    <input type="hidden" name="message_id" value="<%= m.message_id %>">
-                                                    <button type="submit" class="btn btn-danger btn-sm">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-trash3-fill"
-                                                            viewBox="0 0 16 16">
-                                                            <path
-                                                                d="M11 1.5v1h3.5a.5.5 0 0 1 0 1h-.538l-.853 10.66A2 2 0 0 1 11.115 16h-6.23a2 2 0 0 1-1.994-1.84L2.038 3.5H1.5a.5.5 0 0 1 0-1H5v-1A1.5 1.5 0 0 1 6.5 0h3A1.5 1.5 0 0 1 11 1.5m-5 0v1h4v-1a.5.5 0 0 0-.5-.5h-3a.5.5 0 0 0-.5.5M4.5 5.029l.5 8.5a.5.5 0 1 0 .998-.06l-.5-8.5a.5.5 0 1 0-.998.06m6.53-.528a.5.5 0 0 0-.528.47l-.5 8.5a.5.5 0 0 0 .998.058l.5-8.5a.5.5 0 0 0-.47-.528M8 4.5a.5.5 0 0 0-.5.5v8.5a.5.5 0 0 0 1 0V5a.5.5 0 0 0-.5-.5" />
-                                                        </svg>
-                                                    </button>
-                                                </form>
-                                            </div>
-                                        <% } %>
+
                                     </div>
                                 </div>
                             </div>
-                        <% }) %>
-                    <% } %>
+                            <% }) %>
+                                <% } %>
                 </div>
 
                 <!-- Chat Input -->
@@ -87,8 +95,8 @@
                     <form id="chat-form">
                         <div class="input-group">
                             <input type="hidden" id="chat-id" value="<%= chat_id %>">
-                            <input type="text" id="message-input" class="form-control" placeholder="Message <%= friend.username %>"
-                                autocomplete="off" required>
+                            <input type="text" id="message-input" class="form-control"
+                                placeholder="Message <%= friend.username %>" autocomplete="off" required>
                             <button class="btn btn-primary rounded-0" type="submit">Send</button>
                         </div>
                     </form>
@@ -102,7 +110,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             window.scrollTo({ top: document.body.scrollHeight, behavior: "auto" });
             window.scrollTo({ top: document.body.scrollHeight, behavior: 'instant' });
-            
+
             const socket = io();
             const chatId = document.getElementById('chat-id').value;
 
